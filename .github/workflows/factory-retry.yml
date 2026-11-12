@@ -1,0 +1,68 @@
+name: factory-retry
+
+on:
+  workflow_dispatch:
+    inputs:
+      runId:
+        description: 'Factory Run ID to resume'
+        required: true
+        type: string
+      fromStage:
+        description: 'Resume from stage (optional)'
+        required: false
+        type: choice
+        options:
+          - ''
+          - product-requirements
+          - software-architecture
+          - software-engineering
+          - security-compliance
+          - platform-operations
+      portRunId:
+        description: 'Port action run ID'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  actions: write
+  id-token: write
+
+jobs:
+  resume-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Resume factory run
+        env:
+          PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
+          PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          pnpm factory resume --run-id "${{ inputs.runId }}"
+      - name: Start coordinator
+        env:
+          PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
+          PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GITHUB_APP_ID: ${{ secrets.GITHUB_APP_ID }}
+          GITHUB_APP_PRIVATE_KEY_PATH: /tmp/github_app_key.pem
+          GITHUB_APP_INSTALLATION_ID: ${{ secrets.GITHUB_APP_INSTALLATION_ID }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "${{ secrets.GITHUB_APP_PRIVATE_KEY }}" > /tmp/github_app_key.pem
+          chmod 600 /tmp/github_app_key.pem
+          timeout 80m pnpm --filter factory-coordinator start || true
+      - name: Cleanup
+        if: always()
+        run: rm -f /tmp/github_app_key.pem
