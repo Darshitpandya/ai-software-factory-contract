@@ -1,0 +1,51 @@
+name: product-requirements
+stage: 1
+description: Convert WorkOrder intent into a versioned, testable requirements package
+
+inputs:
+  required:
+    - workOrderId
+    - targetService
+    - scope
+    - factoryRelease
+  optional:
+    - portRunId
+    - constraints
+
+outputs:
+  - path: product-spec.md
+    schema: product-spec
+    required: true
+  - path: acceptance.yaml
+    schema: acceptance
+    required: true
+  - path: work-items.json
+    schema: work-items
+    required: true
+
+skills:
+  - requirements-analysis
+  - acceptance-criteria
+  - work-decomposition
+
+mcpAllowlist:
+  - port-context
+  - github-read
+
+humanApproval:
+  required: "constraints.requiresProductApproval == true"
+  timeout: 86400  # 24 hours
+
+acceptance:
+  verifier: internal
+  checks:
+    - id: schema-valid
+      description: All output files pass JSON schema / YAML schema validation
+      command: "pnpm exec tsx factories/product-requirements/scripts/verify-requirements.ts"
+      exitCodeMustBe: 0
+    - id: tenant-isolation-present
+      description: Tenant isolation constraint is explicitly addressed
+      type: content-check
+    - id: no-unresolved-decisions
+      description: No unresolved blocking product decisions remain
+      type: content-check

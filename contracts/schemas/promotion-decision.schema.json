@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://factory.contract/schemas/promotion-decision/v1",
+  "title": "PromotionDecision",
+  "type": "object",
+  "required": ["id", "comparisonId", "baseVersion", "candidateVersion", "decision", "authorizedBy", "decidedAt", "allHardGatesPassed", "evaluationSummary"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string" },
+    "comparisonId": { "type": "string" },
+    "baseVersion": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "candidateVersion": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "decision": {
+      "type": "string",
+      "enum": ["PROMOTE", "HOLD", "REJECT"]
+    },
+    "authorizedBy": { "type": "string" },
+    "decidedAt": { "type": "string", "format": "date-time" },
+    "allHardGatesPassed": { "type": "boolean" },
+    "rationale": { "type": "string" },
+    "evaluationSummary": {
+      "type": "object",
+      "required": ["baseScore", "candidateScore", "regressions", "improvements"],
+      "properties": {
+        "baseScore": { "type": "number", "minimum": 0, "maximum": 1 },
+        "candidateScore": { "type": "number", "minimum": 0, "maximum": 1 },
+        "regressions": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "improvements": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "costPerWorkOrder": {
+          "type": "object",
+          "properties": {
+            "base": { "type": "number" },
+            "candidate": { "type": "number" }
+          }
+        }
+      }
+    }
+  }
+}

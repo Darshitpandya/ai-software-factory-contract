@@ -1,0 +1,54 @@
+stage: product-requirements
+verifier: internal
+
+rules:
+  - id: PR-SCHEMA-001
+    severity: error
+    description: product-spec.md must exist and be non-empty
+    check: file-exists
+    target: product-spec.md
+
+  - id: PR-SCHEMA-002
+    severity: error
+    description: acceptance.yaml must pass its JSON schema
+    check: yaml-schema
+    target: acceptance.yaml
+
+  - id: PR-SCHEMA-003
+    severity: error
+    description: work-items.json must pass its JSON schema
+    check: json-schema
+    schemaRef: work-items
+    target: work-items.json
+
+  - id: PR-CONTENT-001
+    severity: error
+    description: Tenant isolation must appear as an explicit requirement
+    check: content-contains
+    target: product-spec.md
+    pattern: "tenant"
+
+  - id: PR-CONTENT-002
+    severity: error
+    description: Backward compatibility obligation must be declared
+    check: content-contains
+    target: acceptance.yaml
+    pattern: "compatibility"
+
+  - id: PR-CONTENT-003
+    severity: warning
+    description: Each acceptance criterion must reference a requirement ID
+    check: content-pattern
+    target: acceptance.yaml
+    pattern: "requirementId:"
+
+negativeFixtures:
+  - id: NEG-001
+    description: Missing tenant_isolation requirement must FAIL PR-CONTENT-001
+    input: fixtures/missing-tenant.yaml
+    expectFailure: PR-CONTENT-001
+
+  - id: NEG-002
+    description: Unresolved DECISION_NEEDED in product-spec must FAIL
+    input: fixtures/unresolved-decision.md
+    expectFailure: PR-CONTENT-003

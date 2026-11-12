@@ -1,0 +1,60 @@
+version: "3.9"
+# Local development stack — factory coordinator, PostgreSQL, mock OpenSandbox
+# Usage: docker compose up -d
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: factory
+      POSTGRES_PASSWORD: factory
+      POSTGRES_DB: factory
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./../../db/migrations/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U factory"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  postgres-verifier:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: verifier
+      POSTGRES_PASSWORD: verifier
+      POSTGRES_DB: verifier
+    ports:
+      - "5433:5432"
+    volumes:
+      - verifier_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U verifier"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  coordinator:
+    build:
+      context: ../..
+      dockerfile: Dockerfile.coordinator
+    environment:
+      DATABASE_URL: postgresql://factory:factory@postgres:5432/factory
+      PORT_CLIENT_ID: ${PORT_CLIENT_ID}
+      PORT_CLIENT_SECRET: ${PORT_CLIENT_SECRET}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      GITHUB_APP_ID: ${GITHUB_APP_ID}
+      GITHUB_APP_INSTALLATION_ID: ${GITHUB_APP_INSTALLATION_ID}
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - /tmp/factory-sandboxes:/tmp
+    restart: on-failure
+
+volumes:
+  postgres_data:
+  verifier_postgres_data:

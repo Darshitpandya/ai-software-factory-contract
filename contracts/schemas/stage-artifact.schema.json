@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://factory.contract/schemas/stage-artifact/v1",
+  "title": "StageArtifact",
+  "type": "object",
+  "required": ["id", "runId", "stage", "producedAt", "files", "sha256", "producerStatus"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string" },
+    "runId": { "type": "string" },
+    "stage": {
+      "type": "string",
+      "enum": ["product-requirements", "software-architecture", "software-engineering", "security-compliance", "platform-operations"]
+    },
+    "producedAt": { "type": "string", "format": "date-time" },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "sha256", "sizeBytes"],
+        "properties": {
+          "path": { "type": "string" },
+          "sha256": { "type": "string" },
+          "sizeBytes": { "type": "integer" },
+          "mimeType": { "type": "string" }
+        }
+      }
+    },
+    "sha256": {
+      "type": "string",
+      "description": "SHA-256 of the entire artifact bundle"
+    },
+    "producerStatus": {
+      "type": "string",
+      "enum": ["PRODUCED"],
+      "description": "PRODUCED only — acceptance is set separately by the authorized acceptor"
+    },
+    "modelUsed": { "type": "string" },
+    "factoryRelease": { "type": "string" },
+    "baseRepoSha": { "type": "string" },
+    "sandboxId": { "type": "string" },
+    "tokenUsage": {
+      "type": "object",
+      "properties": {
+        "inputTokens": { "type": "integer" },
+        "outputTokens": { "type": "integer" },
+        "cacheReadTokens": { "type": "integer" }
+      }
+    }
+  }
+}

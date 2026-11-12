@@ -1,0 +1,124 @@
+name: factory-run
+
+on:
+  workflow_dispatch:
+    inputs:
+      workOrderId:
+        description: 'Port WorkOrder entity ID'
+        required: true
+        type: string
+      releaseVersion:
+        description: 'Factory release version'
+        required: false
+        default: '1.4.0'
+        type: string
+      portRunId:
+        description: 'Port action run ID for status reporting'
+        required: false
+        type: string
+      action:
+        description: 'Action: run | approve-stage | rollback'
+        required: false
+        default: 'run'
+        type: choice
+        options: [run, approve-stage, rollback]
+      runId:
+        description: 'Existing run ID (for approve-stage / rollback)'
+        required: false
+        type: string
+      stage:
+        description: 'Stage to approve (for approve-stage action)'
+        required: false
+        type: string
+      decision:
+        description: 'APPROVE or REJECT (for approve-stage)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  actions: write  # for dispatch only
+  id-token: write
+
+jobs:
+  factory-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout factory-contract
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Run factory doctor
+        env:
+          PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
+          PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: pnpm factory doctor --profile ci-integration
+
+      - name: Dispatch factory run
+        if: ${{ inputs.action == 'run' }}
+        env:
+          PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
+          PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GITHUB_APP_ID: ${{ secrets.GITHUB_APP_ID }}
+          GITHUB_APP_PRIVATE_KEY_PATH: /tmp/github_app_key.pem
+          GITHUB_APP_INSTALLATION_ID: ${{ secrets.GITHUB_APP_INSTALLATION_ID }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "${{ secrets.GITHUB_APP_PRIVATE_KEY }}" > /tmp/github_app_key.pem
+          chmod 600 /tmp/github_app_key.pem
+          pnpm factory run \
+            --work-order "${{ inputs.workOrderId }}" \
+            --release "${{ inputs.releaseVersion }}"
+
+      - name: Start coordinator (runs until all stages complete)
+        if: ${{ inputs.action == 'run' }}
+        env:
+          PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
+          PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GITHUB_APP_ID: ${{ secrets.GITHUB_APP_ID }}
+          GITHUB_APP_PRIVATE_KEY_PATH: /tmp/github_app_key.pem
+          GITHUB_APP_INSTALLATION_ID: ${{ secrets.GITHUB_APP_INSTALLATION_ID }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Coordinator runs until the run is terminal or the job times out
+          timeout 80m pnpm --filter factory-coordinator start || true
+
+      - name: Approve stage
+        if: ${{ inputs.action == 'approve-stage' }}
+        env:
+          PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
+          PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "Stage approval: run=${{ inputs.runId }} stage=${{ inputs.stage }} decision=${{ inputs.decision }}"
+          # Insert approval record
+          psql "$DATABASE_URL" -c "
+            INSERT INTO stage_approvals (run_id, stage, decision, approved_by, port_action_run_id)
+            VALUES ('${{ inputs.runId }}', '${{ inputs.stage }}', '${{ inputs.decision }}', 'github-actions', '${{ inputs.portRunId }}');"
+
+      - name: Cleanup secrets
+        if: always()
+        run: rm -f /tmp/github_app_key.pem

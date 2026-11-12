@@ -1,0 +1,32 @@
+apiVersion: factory.contract/v1
+kind: EvaluationWorkOrder
+
+metadata:
+  id: eval-wo-001
+  title: "Tenant-scoped invoice export — evaluation fixture"
+  version: 1
+  # FIXED: do not modify; this is the locked evaluation input
+
+workOrder:
+  targetService: factory-reference-billing-api
+  scope: |
+    Add a tenant-scoped CSV invoice export endpoint (GET /v1/invoices/export) to the existing
+    billing API. Requirements:
+    1. Tenant identity from validated JWT claims only — never from query parameters or headers.
+    2. Export must be scoped to the authenticated tenant's data only.
+    3. Preserve the existing GET /v1/invoices endpoint behavior without any breaking changes.
+    4. Enforce a maximum export size of 10,000 invoices per request.
+    5. CSV output must escape formula injection (cells starting with =, +, -, @).
+    6. Return 403 for cross-tenant access attempts.
+    7. Log an audit event for every successful export.
+
+  constraints:
+    backwardCompatibility: true
+    tenantIsolation: required
+    existingEndpointsMustNotBreak: true
+    requiresProductApproval: false
+
+hardGateInputs:
+  baseOpenApiPath: "openapi/compatibility-baseline.yaml"
+  compatibilityCheckRequired: true
+  tenantIsolationTestRequired: true

@@ -1,0 +1,54 @@
+apiVersion: factory.contract/v1
+kind: FactoryRelease
+
+metadata:
+  name: software-delivery
+  version: "1.4.0"
+  status: ACTIVE
+  createdAt: "2026-01-01T00:00:00Z"
+
+runtime:
+  engine: claude-agent-sdk
+  # Pin to a specific Anthropic model; update and evaluate before promoting
+  defaultModel: claude-opus-4-5
+  sandbox:
+    provider: opensandbox
+    # Pin to a specific image digest for reproducibility
+    # Update sandbox.lock.json when changing this value
+    imageDigest: "sha256:REPLACE_WITH_ACTUAL_NODE22_IMAGE_DIGEST"
+    resourceLimits:
+      cpus: "2.0"
+      memoryMb: 4096
+      ttlSeconds: 3600
+      networkEgress: restricted
+
+productionLines:
+  - product-requirements
+  - software-architecture
+  - software-engineering
+  - security-compliance
+  - platform-operations
+
+# Per-stage model overrides (comment out to use defaultModel)
+# stageModels:
+#   software-engineering: claude-opus-4-5
+
+components:
+  skillsLock: factory-releases/skills.lock.json
+  toolsLock: factory-releases/tools.lock.json
+  sandboxLock: factory-releases/sandbox.lock.json
+  workflowRef: "main"  # Pinned to workflow SHA at lock-components time
+
+acceptance:
+  contract: factories/*/acceptance.yaml
+
+evaluation:
+  suite: evaluation/suite.yaml
+  promotionPolicy: evaluation/policies/promotion.yaml
+
+# Human approval required for these transitions
+humanApprovalRequired:
+  - stage: product-requirements
+    condition: "constraints.requiresProductApproval == true"
+  - stage: platform-operations
+    condition: "deployment.environment == 'staging'"

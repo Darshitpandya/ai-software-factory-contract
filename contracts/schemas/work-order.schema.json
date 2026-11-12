@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://factory.contract/schemas/work-order/v1",
+  "title": "WorkOrder",
+  "type": "object",
+  "required": ["id", "version", "title", "targetService", "scope", "factoryRelease", "requestedBy", "createdAt"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable unique identifier (Port entity ID or UUID)",
+      "pattern": "^[a-zA-Z0-9_-]{3,64}$"
+    },
+    "version": {
+      "type": "integer",
+      "description": "Monotonically increasing version; bump on any approved amendment",
+      "minimum": 1
+    },
+    "title": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 200
+    },
+    "targetService": {
+      "type": "string",
+      "description": "Port service entity identifier"
+    },
+    "scope": {
+      "type": "string",
+      "description": "Human-readable scope statement for factory input"
+    },
+    "factoryRelease": {
+      "type": "string",
+      "description": "Pinned factory release version",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "requestedBy": {
+      "type": "string",
+      "description": "Authenticated identity of the requester"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "constraints": {
+      "type": "object",
+      "description": "Domain-specific hard constraints (backward compatibility, tenant isolation, etc.)",
+      "additionalProperties": true
+    },
+    "portRunId": {
+      "type": "string",
+      "description": "Port action run ID for status reporting"
+    },
+    "githubOrg": {
+      "type": "string",
+      "description": "GitHub org / account for target consumer repos"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["PENDING", "RUNNING", "BLOCKED", "COMPLETED", "FAILED", "WAITING_FOR_HUMAN"],
+      "default": "PENDING"
+    }
+  }
+}

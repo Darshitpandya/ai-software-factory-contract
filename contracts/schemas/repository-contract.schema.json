@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://factory.contract/schemas/repository-contract/v1",
+  "title": "RepositoryContract",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "consumedRelease", "build", "acceptance"],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": { "type": "string", "const": "factory.contract/v1" },
+    "kind": { "type": "string", "const": "RepositoryContract" },
+    "metadata": {
+      "type": "object",
+      "required": ["name", "owner", "language"],
+      "properties": {
+        "name": { "type": "string" },
+        "owner": { "type": "string" },
+        "language": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    },
+    "consumedRelease": {
+      "type": "string",
+      "description": "Exact factory release version consumed by this repository"
+    },
+    "build": {
+      "type": "object",
+      "required": ["install", "typecheck", "test"],
+      "properties": {
+        "install": { "type": "string" },
+        "typecheck": { "type": "string" },
+        "lint": { "type": "string" },
+        "test": { "type": "string" },
+        "e2eTest": { "type": "string" },
+        "openApiValidate": { "type": "string" }
+      }
+    },
+    "acceptance": {
+      "type": "object",
+      "required": ["requiredChecks"],
+      "properties": {
+        "requiredChecks": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "GitHub Check names that must pass. factory-contract/acceptance must be present."
+        },
+        "compatibilityBaselinePath": {
+          "type": "string",
+          "description": "Path to OpenAPI or event schema baseline (resolved from base SHA by verifier)"
+        },
+        "tenantIsolationRequired": { "type": "boolean" },
+        "piiPolicies": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "doNotModify": {
+      "type": "array",
+      "description": "File paths that must not be modified in the same PR as source code",
+      "items": { "type": "string" }
+    }
+  }
+}

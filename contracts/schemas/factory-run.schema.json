@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://factory.contract/schemas/factory-run/v1",
+  "title": "FactoryRun",
+  "type": "object",
+  "required": ["id", "workOrderId", "factoryRelease", "status", "createdAt", "stages"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string" },
+    "workOrderId": { "type": "string" },
+    "factoryRelease": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "status": {
+      "type": "string",
+      "enum": ["PENDING", "RUNNING", "BLOCKED", "WAITING_FOR_HUMAN", "COMPLETED", "FAILED", "CANCELLED"]
+    },
+    "currentStage": {
+      "type": "string",
+      "enum": ["product-requirements", "software-architecture", "software-engineering", "security-compliance", "platform-operations"]
+    },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "completedAt": { "type": "string", "format": "date-time" },
+    "githubRunUrl": { "type": "string", "format": "uri" },
+    "evidenceRef": {
+      "type": "string",
+      "description": "SHA-256 of the evidence bundle committed to the artifact store"
+    },
+    "totalDurationSeconds": { "type": "integer", "minimum": 0 },
+    "stages": {
+      "type": "object",
+      "description": "Keyed by stage name, each containing stage execution records",
+      "properties": {
+        "product-requirements": { "$ref": "#/$defs/stageRecord" },
+        "software-architecture": { "$ref": "#/$defs/stageRecord" },
+        "software-engineering": { "$ref": "#/$defs/stageRecord" },
+        "security-compliance": { "$ref": "#/$defs/stageRecord" },
+        "platform-operations": { "$ref": "#/$defs/stageRecord" }
+      }
+    },
+    "error": {
+      "type": "object",
+      "properties": {
+        "stage": { "type": "string" },
+        "message": { "type": "string" },
+        "code": { "type": "string" }
+      }
+    }
+  },
+  "$defs": {
+    "stageRecord": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["PENDING", "RUNNING", "PRODUCED", "ACCEPTED", "REJECTED", "BLOCKED", "SKIPPED"]
+        },
+        "attempts": { "type": "integer", "minimum": 0 },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "completedAt": { "type": "string", "format": "date-time" },
+        "artifactRef": { "type": "string" },
+        "acceptanceRef": { "type": "string" },
+        "modelUsed": { "type": "string" },
+        "tokenUsage": {
+          "type": "object",
+          "properties": {
+            "inputTokens": { "type": "integer" },
+            "outputTokens": { "type": "integer" }
+          }
+        },
+        "error": { "type": "string" }
+      }
+    }
+  }
+}

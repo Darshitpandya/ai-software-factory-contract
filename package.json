@@ -1,0 +1,46 @@
+{
+  "name": "ai-software-factory-contract",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI Software Factory Contract — versioned production factory for Port, Claude, OpenSandbox",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.14.2",
+  "scripts": {
+    "build": "pnpm -r run build",
+    "typecheck": "tsc --project tsconfig.json",
+    "lint": "eslint . --ext .ts --max-warnings 0",
+    "format": "prettier --write .",
+    "test": "vitest run --reporter=verbose --passWithNoTests",
+    "factory": "tsx apps/factory-cli/src/index.ts",
+    "factory:doctor": "tsx apps/factory-cli/src/index.ts doctor",
+    "factory:run": "tsx apps/factory-cli/src/index.ts run",
+    "factory:resume": "tsx apps/factory-cli/src/index.ts resume",
+    "factory:port:plan": "tsx apps/factory-cli/src/index.ts port:plan",
+    "factory:port:apply": "tsx apps/factory-cli/src/index.ts port:apply",
+    "factory:registry:verify": "tsx apps/factory-cli/src/index.ts registry:verify",
+    "factory:evaluation:run": "tsx apps/factory-cli/src/index.ts evaluation:run",
+    "factory:evaluation:report": "tsx apps/factory-cli/src/index.ts evaluation:report",
+    "factory:promote": "tsx apps/factory-cli/src/index.ts promote",
+    "factory:evidence:verify": "tsx apps/factory-cli/src/index.ts evidence:verify",
+    "factory:teardown": "tsx apps/factory-cli/src/index.ts teardown",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "bootstrap": "tsx scripts/bootstrap.ts",
+    "lock-components": "tsx scripts/lock-components.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.11.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.3.0",
+    "tsx": "^4.16.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  },
+  "dependencies": {}
+}

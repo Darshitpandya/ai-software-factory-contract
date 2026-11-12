@@ -1,0 +1,27 @@
+{
+  "name": "@factory/coordinator",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@factory/contract-types": "workspace:*",
+    "@factory/port-client": "workspace:*",
+    "@factory/state-machine": "workspace:*",
+    "@factory/claude-executor": "workspace:*",
+    "@factory/sandbox-adapter": "workspace:*",
+    "@factory/artifact-store": "workspace:*",
+    "@factory/acceptance-client": "workspace:*",
+    "pg": "^8.12.0",
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.11.0",
+    "@types/js-yaml": "^4.0.9",
+    "typescript": "^5.5.0",
+    "tsx": "^4.16.0"
+  }
+}

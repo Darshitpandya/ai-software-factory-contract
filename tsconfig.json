@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@factory/contract-types": ["packages/contract-types/src/index.ts"],
+      "@factory/port-client": ["packages/port-client/src/index.ts"],
+      "@factory/github-client": ["packages/github-client/src/index.ts"],
+      "@factory/state-machine": ["packages/state-machine/src/index.ts"],
+      "@factory/claude-executor": ["packages/claude-executor/src/index.ts"],
+      "@factory/sandbox-adapter": ["packages/sandbox-adapter/src/index.ts"],
+      "@factory/artifact-store": ["packages/artifact-store/src/index.ts"],
+      "@factory/acceptance-client": ["packages/acceptance-client/src/index.ts"]
+    }
+  },
+  "include": [
+    "packages/*/src/**/*.ts",
+    "apps/*/src/**/*.ts",
+    "factories/**/scripts/*.ts",
+    "scripts/**/*.ts"
+  ]
+}

@@ -1,0 +1,11 @@
+# PROTECTED — do not edit directly.
+# Update only via: pnpm factory promote --candidate <version> --decision <id>
+# Any direct edit without a PromotionDecision is a policy violation.
+
+apiVersion: factory.contract/v1
+kind: ActiveRelease
+
+activeVersion: "1.4.0"
+activatedAt: "2026-01-01T00:00:00Z"
+activatedBy: "initial-bootstrap"
+promotionDecisionId: "bootstrap-initial"

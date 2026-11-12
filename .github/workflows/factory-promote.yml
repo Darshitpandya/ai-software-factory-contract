@@ -1,0 +1,43 @@
+name: factory-promote
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidateVersion:
+        description: 'Candidate version to promote'
+        required: true
+      decisionId:
+        description: 'PromotionDecision ID from evaluation'
+        required: true
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    environment: production  # Requires environment protection rule approval
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - run: pnpm install --frozen-lockfile
+      - name: Promote release
+        env:
+          PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
+          PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          pnpm factory promote \
+            --candidate "${{ inputs.candidateVersion }}" \
+            --decision "${{ inputs.decisionId }}"
+      - name: Commit active.yaml
+        run: |
+          git config user.name "factory-coordinator[bot]"
+          git config user.email "factory-coordinator[bot]@users.noreply.github.com"
+          git add factory-releases/active.yaml
+          git commit -m "chore: promote factory release ${{ inputs.candidateVersion }} [decision: ${{ inputs.decisionId }}]"
+          git push

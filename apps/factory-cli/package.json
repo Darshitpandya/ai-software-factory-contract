@@ -1,0 +1,26 @@
+{
+  "name": "@factory/cli",
+  "version": "1.0.0",
+  "private": true,
+  "bin": { "factory": "./src/index.ts" },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "start": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@factory/contract-types": "workspace:*",
+    "@factory/port-client": "workspace:*",
+    "@factory/state-machine": "workspace:*",
+    "commander": "^12.1.0",
+    "pg": "^8.12.0",
+    "js-yaml": "^4.1.0",
+    "chalk": "^5.3.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/pg": "^8.11.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.0",
+    "tsx": "^4.16.0"
+  }
+}

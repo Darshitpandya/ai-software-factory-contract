@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://factory.contract/schemas/factory-release/v1",
+  "title": "FactoryRelease",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "runtime", "productionLines", "components", "acceptance"],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": { "type": "string", "const": "factory.contract/v1" },
+    "kind": { "type": "string", "const": "FactoryRelease" },
+    "metadata": {
+      "type": "object",
+      "required": ["name", "version", "status"],
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+        "status": {
+          "type": "string",
+          "enum": ["CANDIDATE", "ACTIVE", "DEPRECATED", "REJECTED"]
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "required": ["engine", "defaultModel", "sandbox"],
+      "properties": {
+        "engine": { "type": "string", "const": "claude-agent-sdk" },
+        "defaultModel": {
+          "type": "string",
+          "description": "Pinned Anthropic model identifier"
+        },
+        "sandbox": {
+          "type": "object",
+          "required": ["provider", "imageDigest"],
+          "properties": {
+            "provider": { "type": "string" },
+            "imageDigest": {
+              "type": "string",
+              "description": "sha256: prefixed image digest for determinism"
+            },
+            "resourceLimits": {
+              "type": "object",
+              "properties": {
+                "cpus": { "type": "string" },
+                "memoryMb": { "type": "integer" },
+                "ttlSeconds": { "type": "integer" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "productionLines": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "string",
+        "enum": ["product-requirements", "software-architecture", "software-engineering", "security-compliance", "platform-operations"]
+      }
+    },
+    "stageModels": {
+      "type": "object",
+      "description": "Per-stage model overrides. Omit to use defaultModel for all stages.",
+      "properties": {
+        "product-requirements": { "type": "string" },
+        "software-architecture": { "type": "string" },
+        "software-engineering": { "type": "string" },
+        "security-compliance": { "type": "string" },
+        "platform-operations": { "type": "string" }
+      }
+    },
+    "components": {
+      "type": "object",
+      "required": ["skillsLock", "toolsLock", "workflowRef"],
+      "properties": {
+        "skillsLock": { "type": "string", "description": "Path to skills.lock.json" },
+        "toolsLock": { "type": "string", "description": "Path to tools.lock.json" },
+        "sandboxLock": { "type": "string" },
+        "workflowRef": { "type": "string", "description": "Git ref for workflow SHA pinning" }
+      }
+    },
+    "acceptance": {
+      "type": "object",
+      "required": ["contract"],
+      "properties": {
+        "contract": { "type": "string", "description": "Path to acceptance.yaml" }
+      }
+    },
+    "evaluation": {
+      "type": "object",
+      "properties": {
+        "suite": { "type": "string" },
+        "promotionPolicy": { "type": "string" }
+      }
+    }
+  }
+}

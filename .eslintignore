@@ -1,0 +1,2 @@
+factories/*/scripts/*.ts
+packages/github-client/src/index.ts

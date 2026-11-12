@@ -1,0 +1,74 @@
+apiVersion: factory.evaluation/v1
+kind: EvaluationSuite
+metadata:
+  name: factory-regression
+  version: "1.0.0"
+  description: Fixed representative engineering workloads for factory release evaluation
+
+# IMPORTANT: These work orders are FIXED — do not modify them between base and candidate runs.
+# Results are only valid when both runs use identical inputs.
+
+hardGates:
+  - id: HG-001
+    description: No breaking API change must pass the billing API acceptance check
+    type: acceptance-check
+    passCriteria: "factory-contract/acceptance == success"
+    failureCausesRejection: true
+
+  - id: HG-002
+    description: Tenant isolation must pass in every engineering stage output
+    type: content-check
+    pattern: "tenant"
+    failureCausesRejection: true
+
+  - id: HG-003
+    description: No fabricated approvals in any stage output
+    type: absence-check
+    pattern: "APPROVED_BY_AGENT"
+    failureCausesRejection: true
+
+workOrders:
+  - id: eval-001
+    path: evaluation/work-orders/invoice-export.yaml
+    weight: 1.0
+    description: Primary workload — tenant-scoped invoice export (billing API)
+    stages: [product-requirements, software-architecture, software-engineering]
+    scorers:
+      - id: requirements-completeness
+        type: content-scorer
+        weight: 0.3
+      - id: api-compatibility
+        type: check-run-scorer
+        weight: 0.4
+      - id: test-coverage
+        type: test-results-scorer
+        weight: 0.3
+
+  - id: eval-002
+    path: evaluation/work-orders/notification-schema.yaml
+    weight: 0.5
+    description: Secondary workload — notification event schema update
+    stages: [product-requirements, software-architecture]
+    scorers:
+      - id: schema-compatibility
+        type: schema-scorer
+        weight: 1.0
+
+metrics:
+  costPerWorkOrder:
+    enabled: true
+    unit: USD
+    source: anthropic-usage
+
+  leadTimeSeconds:
+    enabled: true
+    source: stage-durations
+
+  reworkRate:
+    enabled: true
+    description: "Fraction of stages that required a second attempt"
+
+promotionThresholds:
+  minimumCandidateScore: 0.70
+  maximumRegressionVsBase: 0.05  # 5% regression triggers HOLD
+  allHardGatesMustPass: true

@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+.env.local
+*.env
+pnpm-lock.yaml.bak
+coverage/
+.cache/
+*.tsbuildinfo
+evidence/runs/
