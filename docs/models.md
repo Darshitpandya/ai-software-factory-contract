@@ -62,17 +62,27 @@ const response = await this.client.messages.create({
 | `security-compliance` | `claude-sonnet-5-5` | Policy matching + structured evidence; Sonnet is sufficient |
 | `platform-operations` | `claude-haiku-5-5` | Health checks, deployment plans; fast structured output |
 
-### Release 1.5.0 — CANDIDATE (under evaluation)
+### Release 1.5.0 — CANDIDATE (Option B — override specific stages only)
 
-| Stage | Model | Change from 1.4.0 |
+```yaml
+# factory-releases/1.5.0/factory-release.yaml
+runtime:
+  defaultModel: claude-opus-5-5  # product-requirements, security-compliance, platform-operations use this
+
+stageModels:
+  software-architecture: claude-fable-5-2  # only stages that DIFFER from defaultModel listed here
+  software-engineering: claude-fable-5-2
+```
+
+| Stage | Model | Source |
 |---|---|---|
-| `product-requirements` | `claude-sonnet-5-5` | unchanged |
-| `software-architecture` | `claude-fable-5-2` | ⬆ **upgraded** — testing Fable's adaptive thinking for ADR quality |
-| `software-engineering` | `claude-fable-5-2` | ⬆ **upgraded** — testing Fable's agentic coding for fewer rework cycles |
-| `security-compliance` | `claude-sonnet-5-5` | unchanged |
-| `platform-operations` | `claude-haiku-5-5` | unchanged |
+| `product-requirements` | `claude-opus-5-5` | ← falls back to `defaultModel` |
+| `software-architecture` | `claude-fable-5-2` | ← explicit `stageModels` override |
+| `software-engineering` | `claude-fable-5-2` | ← explicit `stageModels` override |
+| `security-compliance` | `claude-opus-5-5` | ← falls back to `defaultModel` |
+| `platform-operations` | `claude-opus-5-5` | ← falls back to `defaultModel` |
 
-**Evaluation hypothesis:** Does `claude-fable-5-2` on the two most complex stages produce measurably better outputs than `claude-opus-5-5`, without introducing compatibility regressions, at acceptable cost?
+**Evaluation hypothesis:** Does `claude-fable-5-2` on the two most demanding stages produce measurably better ADRs and code (fewer engineering stage rejections) at acceptable cost vs the extra ~$0.60 per run?
 
 ---
 

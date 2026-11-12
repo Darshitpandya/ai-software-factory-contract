@@ -65,11 +65,11 @@ productionLines:
 #   3. pnpm factory promote --candidate 1.5.0 --decision <id>
 # ─────────────────────────────────────────────────────────────────────────────
 stageModels:
-  product-requirements: claude-sonnet-5-5
-  software-architecture: claude-fable-5-2    # ← UPGRADED from claude-opus-5-5
-  software-engineering: claude-fable-5-2     # ← UPGRADED from claude-opus-5-5
-  security-compliance: claude-sonnet-5-5
-  platform-operations: claude-haiku-5-5
+  # Option B — only specify stages that DIFFER from defaultModel.
+  # product-requirements, security-compliance, platform-operations
+  # all fall back to defaultModel: claude-opus-5-5
+  software-architecture: claude-fable-5-2    # ← overrides defaultModel
+  software-engineering: claude-fable-5-2     # ← overrides defaultModel
 
 components:
   skillsLock: factory-releases/skills.lock.json
