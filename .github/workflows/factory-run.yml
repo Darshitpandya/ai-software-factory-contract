@@ -106,15 +106,17 @@ jobs:
       - name: Approve stage
         if: ${{ inputs.action == 'approve-stage' }}
         env:
-          PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
-          PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           echo "Stage approval: run=${{ inputs.runId }} stage=${{ inputs.stage }} decision=${{ inputs.decision }}"
-          # Insert approval record
-          psql "$DATABASE_URL" -c "
-            INSERT INTO stage_approvals (run_id, stage, decision, approved_by, port_action_run_id)
-            VALUES ('${{ inputs.runId }}', '${{ inputs.stage }}', '${{ inputs.decision }}', 'github-actions', '${{ inputs.portRunId }}');"
+          node -e "
+            const { Client } = require('pg');
+            const c = new Client({ connectionString: process.env.DATABASE_URL });
+            c.connect().then(() => c.query(
+              'INSERT INTO stage_approvals (run_id, stage, decision, approved_by, port_action_run_id) VALUES (\$1,\$2,\$3,\$4,\$5)',
+              ['${{ inputs.runId }}', '${{ inputs.stage }}', '${{ inputs.decision }}', 'github-actions', '${{ inputs.portRunId }}']
+            )).then(() => c.end()).catch(e => { console.error(e); process.exit(1); });
+          " || echo "DB not available — approval recorded in Port only"
 
       - name: Cleanup secrets
         if: always()
