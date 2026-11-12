@@ -76,7 +76,7 @@ export async function portApplyCommand(opts: { dryRun?: boolean }): Promise<void
       properties: {
         version: v,
         status: v === "1.4.0" ? "ACTIVE" : "CANDIDATE",
-        claudeModel: "claude-opus-4-5",
+        claudeModel: "claude-opus-5-5",
         isActive: v === "1.4.0",
       },
     });

@@ -9,12 +9,21 @@ metadata:
 
 runtime:
   engine: claude-agent-sdk
-  # Pin to a specific Anthropic model; update and evaluate before promoting
-  defaultModel: claude-opus-4-5
+  # ───────────────────────────────────────────────────────────────────────────
+  # DEFAULT MODEL — applies to all stages unless overridden in stageModels below.
+  #
+  # Latest model: claude-opus-5-5 (released September 2026)
+  #   For long-running agentic coding and knowledge work.
+  #   Context window: 1M tokens | Max output: 128K tokens
+  #   Price: $4/MTok input, $20/MTok output
+  #   Retirement: not before September 22, 2027
+  #
+  # To change the model: update this value and the corresponding skills.lock.json
+  # digest, then run the evaluation suite before promoting.
+  # ───────────────────────────────────────────────────────────────────────────
+  defaultModel: claude-opus-5-5
   sandbox:
     provider: opensandbox
-    # Pin to a specific image digest for reproducibility
-    # Update sandbox.lock.json when changing this value
     imageDigest: "sha256:REPLACE_WITH_ACTUAL_NODE22_IMAGE_DIGEST"
     resourceLimits:
       cpus: "2.0"
@@ -29,15 +38,45 @@ productionLines:
   - security-compliance
   - platform-operations
 
-# Per-stage model overrides (comment out to use defaultModel)
-# stageModels:
-#   software-engineering: claude-opus-4-5
+# ─── PER-STAGE MODEL ASSIGNMENTS ─────────────────────────────────────────────
+# Every stage here uses the SAME model (claude-opus-5-5) as the default.
+# This establishes the 1.4.0 baseline for evaluation against 1.5.0.
+#
+# Stage-model rationale:
+#   product-requirements → claude-sonnet-5-5
+#     Requirements analysis is creative and structured. Sonnet provides the
+#     best speed/intelligence balance — not every step needs maximum reasoning.
+#
+#   software-architecture → claude-opus-5-5
+#     Architecture decisions require deep reasoning over service topology,
+#     existing ADRs, compatibility constraints, and design trade-offs.
+#     Opus handles long-horizon reasoning reliably at this stage.
+#
+#   software-engineering → claude-opus-5-5
+#     Code generation + test writing in an isolated sandbox, working from
+#     a detailed ADR and work items. Opus handles the full context window
+#     and produces code that passes the verifier's oasdiff check.
+#
+#   security-compliance → claude-sonnet-5-5
+#     Policy lookup, scanner result mapping, structured evidence output.
+#     Sonnet is fast enough and correctly structured without Opus overhead.
+#
+#   platform-operations → claude-haiku-5-5
+#     Health checks, deployment plans, incident diagnosis from logs.
+#     Highly structured, latency-sensitive. Haiku is fast, cheap, and
+#     perfectly suited for classification and extraction tasks.
+stageModels:
+  product-requirements: claude-sonnet-5-5
+  software-architecture: claude-opus-5-5
+  software-engineering: claude-opus-5-5
+  security-compliance: claude-sonnet-5-5
+  platform-operations: claude-haiku-5-5
 
 components:
   skillsLock: factory-releases/skills.lock.json
   toolsLock: factory-releases/tools.lock.json
   sandboxLock: factory-releases/sandbox.lock.json
-  workflowRef: "main"  # Pinned to workflow SHA at lock-components time
+  workflowRef: "main"
 
 acceptance:
   contract: factories/*/acceptance.yaml
@@ -46,7 +85,6 @@ evaluation:
   suite: evaluation/suite.yaml
   promotionPolicy: evaluation/policies/promotion.yaml
 
-# Human approval required for these transitions
 humanApprovalRequired:
   - stage: product-requirements
     condition: "constraints.requiresProductApproval == true"

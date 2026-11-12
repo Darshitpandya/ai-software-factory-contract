@@ -5,12 +5,23 @@ metadata:
   name: software-delivery
   version: "1.5.0"
   status: CANDIDATE
-  createdAt: "2026-06-01T00:00:00Z"
+  createdAt: "2026-11-01T00:00:00Z"
 
 runtime:
   engine: claude-agent-sdk
-  # Candidate: evaluating newer model against fixed evaluation suite
-  defaultModel: claude-opus-4-5
+  # ───────────────────────────────────────────────────────────────────────────
+  # DEFAULT MODEL for 1.5.0 candidate — same as 1.4.0 baseline.
+  # The two key stages (software-architecture, software-engineering) are
+  # upgraded to claude-fable-5-2 to test whether the more capable model
+  # produces measurably better ADRs and code without introducing regressions.
+  #
+  # Evaluation hypothesis:
+  #   "Does claude-fable-5-2 on the two most demanding stages produce
+  #    higher-quality outputs than claude-opus-5-5 at acceptable cost?"
+  #
+  # Hard gate HG-001 blocks promotion if any breaking API change appears.
+  # ───────────────────────────────────────────────────────────────────────────
+  defaultModel: claude-opus-5-5
   sandbox:
     provider: opensandbox
     imageDigest: "sha256:REPLACE_WITH_ACTUAL_NODE22_IMAGE_DIGEST"
@@ -27,10 +38,38 @@ productionLines:
   - security-compliance
   - platform-operations
 
-# 1.5.0 candidate change: software-architecture uses a different model
+# ─── PER-STAGE MODEL ASSIGNMENTS — 1.5.0 CANDIDATE ──────────────────────────
+#
+# Changes vs 1.4.0:
+#
+#   software-architecture: claude-opus-5-5 → claude-fable-5-2
+#     Hypothesis: Fable's adaptive thinking and long-horizon reasoning
+#     should produce more rigorous ADRs and OpenAPI specs that are
+#     less likely to introduce compatibility issues downstream.
+#     Cost increase: $8/MTok (Fable) vs $4/MTok (Opus) on this stage only.
+#
+#   software-engineering: claude-opus-5-5 → claude-fable-5-2
+#     Hypothesis: Fable's agentic capabilities should handle the full
+#     feature-implementation + test-driven-change skill sequence with
+#     fewer iterations and produce code that passes the verifier first time.
+#     This is the highest-value stage for the Fable upgrade.
+#
+# Unchanged stages (same as 1.4.0):
+#   product-requirements: claude-sonnet-5-5 (speed/intelligence balance, unchanged)
+#   security-compliance: claude-sonnet-5-5 (structured policy matching, unchanged)
+#   platform-operations: claude-haiku-5-5 (fast structured output, unchanged)
+#
+# To promote this candidate:
+#   1. pnpm factory evaluation:run --base 1.4.0 --candidate 1.5.0
+#   2. pnpm factory evaluation:report --comparison <id>
+#   3. pnpm factory promote --candidate 1.5.0 --decision <id>
+# ─────────────────────────────────────────────────────────────────────────────
 stageModels:
-  software-architecture: claude-opus-4-5
-  software-engineering: claude-opus-4-5
+  product-requirements: claude-sonnet-5-5
+  software-architecture: claude-fable-5-2    # ← UPGRADED from claude-opus-5-5
+  software-engineering: claude-fable-5-2     # ← UPGRADED from claude-opus-5-5
+  security-compliance: claude-sonnet-5-5
+  platform-operations: claude-haiku-5-5
 
 components:
   skillsLock: factory-releases/skills.lock.json
@@ -51,6 +90,5 @@ humanApprovalRequired:
   - stage: platform-operations
     condition: "deployment.environment == 'staging'"
 
-# CANDIDATE — do not promote to active.yaml without a PromotionDecision record
+# CANDIDATE — do not promote without a PromotionDecision.
 # Run: pnpm factory evaluation:run --base 1.4.0 --candidate 1.5.0
-# Then: pnpm factory promote --candidate 1.5.0 --decision <id>

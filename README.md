@@ -124,6 +124,7 @@ packages/
   github-client/      GitHub App: read + PR create (producer App, scoped)
   state-machine/      PostgreSQL-backed stages, leases, idempotency, retries
   claude-executor/    @anthropic-ai/sdk agentic loop; loads AGENTS.md + SKILL.md per stage
+                      Model resolved from FactoryRelease: stageModels[stage] ?? defaultModel
   sandbox-adapter/    Local-docker (dev) or OpenSandbox API (CI/hardened)
   artifact-store/     SHA-256 bundle collection and evidence persistence
   acceptance-client/  Polls GitHub Checks API for factory-contract/acceptance verdict
@@ -141,8 +142,8 @@ factories/
   platform-operations/    AGENTS.md, 3×SKILL.md, verify-deployment.ts
 
 factory-releases/
-  1.4.0/factory-release.yaml   ACTIVE release: claude-opus-4-5, all 5 stages
-  1.5.0/factory-release.yaml   CANDIDATE: different stage-model assignment
+  1.4.0/factory-release.yaml   ACTIVE — sonnet-5-5 (requirements/security) + opus-5-5 (architecture/engineering) + haiku-5-5 (platform-ops)
+  1.5.0/factory-release.yaml   CANDIDATE — fable-5-2 for architecture+engineering; others unchanged
   active.yaml                  Protected pointer; only updated via pnpm factory promote
   skills.lock.json             Real SHA-256 digests for all 15 skills (run pnpm lock-components)
   tools.lock.json              MCP endpoint identities + approved tool names
