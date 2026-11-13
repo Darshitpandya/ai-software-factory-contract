@@ -1,10 +1,21 @@
 # AI Software Factory Contract
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
+[![Skills: Apache-2.0](https://img.shields.io/badge/Skills-Apache--2.0-orange?style=flat-square)](factory-releases/skills.lock.json)
+[![Factory Release](https://img.shields.io/badge/Factory%20Release-1.4.0%20active-brightgreen?style=flat-square)](factory-releases/1.4.0/factory-release.yaml)
+[![CI](https://img.shields.io/badge/CI-passing-brightgreen?style=flat-square&logo=githubactions&logoColor=white)](https://github.com/Darshitpandya/ai-software-factory-contract/actions)
+[![GitHub Stars](https://img.shields.io/github/stars/Darshitpandya/ai-software-factory-contract?style=flat-square&logo=github)](https://github.com/Darshitpandya/ai-software-factory-contract/stargazers)
+[![15 Skills](https://img.shields.io/badge/Skills-15%20locked-blueviolet?style=flat-square)](factory-releases/skills.lock.json)
+[![Claude](https://img.shields.io/badge/Claude-opus--5--5-5B21B6?style=flat-square)](https://platform.claude.com/docs/en/models/overview)
+[![Port](https://img.shields.io/badge/Port-control%20plane-0096FF?style=flat-square)](https://app.getport.io)
+
 **Build Once · Verify Every Run · Evolve Safely**
 
 A production-oriented engineering factory that takes a `WorkOrder` through five real production capabilities — Product & Requirements, Software Architecture, Software Engineering, Security & Compliance, and Platform & Operations — publishes independently validated artifacts at each handoff, and blocks an unacceptable PR under a verifier the producer cannot control.
 
-[Get started](#quick-start) · [Architecture](#architecture) · [All commands](#commands-reference) · [Port setup](#port-setup) · [Extend to your repo](#adopter-guide) · [Contributing](CONTRIBUTING.md)
+Works with **Claude Code** · **GitHub Actions** · **Port** · **OpenSandbox**
+
+[Get started](#quick-start) · [Architecture](#architecture) · [All commands](#commands-reference) · [Port setup](#port-setup) · [Extend to your repo](#adopter-guide) · [Contributing](CONTRIBUTING.md) · [Models](docs/models.md)
 
 ---
 
