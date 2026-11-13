@@ -1,0 +1,22 @@
+{
+  "name": "ai-factory-producer",
+  "description": "AI Software Factory Contract — producer App for orchestration, PR creation, and workflow dispatch",
+  "url": "https://github.com/Darshitpandya/ai-software-factory-contract",
+  "hook_attributes": {
+    "url": "https://placeholder-update-after-deploy.example.com/webhook",
+    "active": false
+  },
+  "redirect_url": "https://github.com/Darshitpandya/ai-software-factory-contract",
+  "default_permissions": {
+    "contents": "read",
+    "pull_requests": "write",
+    "actions": "write",
+    "metadata": "read",
+    "checks": "read"
+  },
+  "default_events": [
+    "pull_request",
+    "workflow_run"
+  ],
+  "public": false
+}

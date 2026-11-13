@@ -1,0 +1,21 @@
+{
+  "name": "ai-factory-verifier",
+  "description": "AI Software Factory Contract — trusted verifier App, posts factory-contract/acceptance check. SEPARATELY OWNED from producer.",
+  "url": "https://github.com/Darshitpandya/ai-factory-trusted-verifier",
+  "hook_attributes": {
+    "url": "https://REPLACE_WITH_VERIFIER_HTTPS_URL/webhook",
+    "active": true
+  },
+  "redirect_url": "https://github.com/Darshitpandya/ai-factory-trusted-verifier",
+  "default_permissions": {
+    "contents": "read",
+    "pull_requests": "read",
+    "checks": "write",
+    "metadata": "read"
+  },
+  "default_events": [
+    "pull_request",
+    "check_suite"
+  ],
+  "public": false
+}
