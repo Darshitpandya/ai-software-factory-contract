@@ -24,7 +24,7 @@ runtime:
   defaultModel: claude-opus-5-5
   sandbox:
     provider: opensandbox
-    imageDigest: "sha256:REPLACE_WITH_ACTUAL_NODE22_IMAGE_DIGEST"
+    imageDigest: "sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a"
     resourceLimits:
       cpus: "2.0"
       memoryMb: 4096
