@@ -191,9 +191,9 @@ export class GitHubProducerClient {
 }
 
 export function createGitHubClientFromEnv(): GitHubProducerClient {
-  const appId = process.env["GITHUB_APP_ID"];
-  const privateKeyPath = process.env["GITHUB_APP_PRIVATE_KEY_PATH"];
-  const installationId = process.env["GITHUB_APP_INSTALLATION_ID"];
+  const appId = process.env["FACTORY_APP_ID"];
+  const privateKeyPath = process.env["FACTORY_APP_PRIVATE_KEY_PATH"];
+  const installationId = process.env["FACTORY_APP_INSTALLATION_ID"];
 
   if (!appId || !privateKeyPath || !installationId) {
     throw new Error(
@@ -210,6 +210,6 @@ export function createGitHubClientFromEnv(): GitHubProducerClient {
     appId,
     privateKey,
     installationId: parseInt(installationId, 10),
-    webhookSecret: process.env["GITHUB_APP_WEBHOOK_SECRET"],
+    webhookSecret: process.env["FACTORY_APP_WEBHOOK_SECRET"],
   });
 }

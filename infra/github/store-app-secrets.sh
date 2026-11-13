@@ -41,9 +41,9 @@ if [ ! -f "$VER_KEY_PATH" ];  then echo "✗ Verifier key not found: $VER_KEY_PA
 
 echo ""
 echo "Storing Producer App secrets → ai-software-factory-contract ..."
-printf '%s' "$PROD_APP_ID"      | gh secret set GITHUB_APP_ID              --repo "$OWNER/ai-software-factory-contract"
-printf '%s' "$PROD_INSTALL_ID"  | gh secret set GITHUB_APP_INSTALLATION_ID --repo "$OWNER/ai-software-factory-contract"
-cat  "$PROD_KEY_PATH"           | gh secret set GITHUB_APP_PRIVATE_KEY     --repo "$OWNER/ai-software-factory-contract"
+printf '%s' "$PROD_APP_ID"      | gh secret set FACTORY_APP_ID              --repo "$OWNER/ai-software-factory-contract"
+printf '%s' "$PROD_INSTALL_ID"  | gh secret set FACTORY_APP_INSTALLATION_ID --repo "$OWNER/ai-software-factory-contract"
+cat  "$PROD_KEY_PATH"           | gh secret set FACTORY_APP_PRIVATE_KEY     --repo "$OWNER/ai-software-factory-contract"
 echo "  ✓ Producer App secrets stored"
 
 echo ""

@@ -12,7 +12,7 @@ export async function doctorCommand(opts: { profile: string }): Promise<void> {
 
   // ── 1. Environment variables ───────────────────────────────────────────────
   const required = ["PORT_CLIENT_ID", "PORT_CLIENT_SECRET", "ANTHROPIC_API_KEY", "DATABASE_URL"];
-  const optional = ["GITHUB_APP_ID", "GITHUB_APP_PRIVATE_KEY_PATH", "OPENSANDBOX_URL"];
+  const optional = ["FACTORY_APP_ID", "FACTORY_APP_PRIVATE_KEY_PATH", "OPENSANDBOX_URL"];
 
   for (const v of required) {
     const present = !!process.env[v];
@@ -97,8 +97,8 @@ export async function doctorCommand(opts: { profile: string }): Promise<void> {
   }
 
   // ── 8. GitHub App prerequisites ────────────────────────────────────────────
-  const ghAppId = process.env["GITHUB_APP_ID"];
-  const ghKeyPath = process.env["GITHUB_APP_PRIVATE_KEY_PATH"];
+  const ghAppId = process.env["FACTORY_APP_ID"];
+  const ghKeyPath = process.env["FACTORY_APP_PRIVATE_KEY_PATH"];
   const ghKeyExists = ghKeyPath ? existsSync(ghKeyPath) : false;
   checks.push({
     name: "github:app",

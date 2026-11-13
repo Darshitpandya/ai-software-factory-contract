@@ -77,12 +77,12 @@ jobs:
           PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          GITHUB_APP_ID: ${{ secrets.GITHUB_APP_ID }}
+          GITHUB_APP_ID: ${{ secrets.FACTORY_APP_ID }}
           GITHUB_APP_PRIVATE_KEY_PATH: /tmp/github_app_key.pem
-          GITHUB_APP_INSTALLATION_ID: ${{ secrets.GITHUB_APP_INSTALLATION_ID }}
+          GITHUB_APP_INSTALLATION_ID: ${{ secrets.FACTORY_APP_INSTALLATION_ID }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "${{ secrets.GITHUB_APP_PRIVATE_KEY }}" > /tmp/github_app_key.pem
+          echo "${{ secrets.FACTORY_APP_PRIVATE_KEY }}" > /tmp/github_app_key.pem
           chmod 600 /tmp/github_app_key.pem
           pnpm factory run \
             --work-order "${{ inputs.workOrderId }}" \
@@ -95,9 +95,9 @@ jobs:
           PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          GITHUB_APP_ID: ${{ secrets.GITHUB_APP_ID }}
+          GITHUB_APP_ID: ${{ secrets.FACTORY_APP_ID }}
           GITHUB_APP_PRIVATE_KEY_PATH: /tmp/github_app_key.pem
-          GITHUB_APP_INSTALLATION_ID: ${{ secrets.GITHUB_APP_INSTALLATION_ID }}
+          GITHUB_APP_INSTALLATION_ID: ${{ secrets.FACTORY_APP_INSTALLATION_ID }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Coordinator runs until the run is terminal or the job times out
