@@ -1,0 +1,46 @@
+{
+  "id": "f2a43f43-fdf4-47eb-936b-7de4c4837710",
+  "runId": "d9bc9248-1a93-4e62-9eb3-75e945d4b92e",
+  "stage": "platform-operations",
+  "producedAt": "2026-11-14T06:06:17.853Z",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "678fcd8bd483abf2cf1dcb17d5315af14372c79084f2dff31431a43897222e35",
+      "sizeBytes": 325,
+      "mimeType": "text/markdown"
+    },
+    {
+      "path": "deployment.json",
+      "sha256": "563dc767f0702e8d9d9c078bf749e0eebc64c2673139f4542ff0e37666ec2e1c",
+      "sizeBytes": 1686,
+      "mimeType": "application/json"
+    },
+    {
+      "path": "health-evidence.json",
+      "sha256": "9770537a990d1f9358ad4be3323cd0d913f3b3250446ab6b667286d6342e829d",
+      "sizeBytes": 1017,
+      "mimeType": "application/json"
+    },
+    {
+      "path": "runbook.md",
+      "sha256": "b3401081fe29ed559b00e81fb2bde2e106b33dd75171d144dffbf4246188d345",
+      "sizeBytes": 3163,
+      "mimeType": "text/markdown"
+    },
+    {
+      "path": "work-order.json",
+      "sha256": "d61f92d2fb74e41494139cd25f2f696c69d9ae7c1e6ba31f1aac9d38da9e4d75",
+      "sizeBytes": 404,
+      "mimeType": "application/json"
+    }
+  ],
+  "sha256": "a656959251a8d0b6490d1a0fa014fe2f4f33cbb144f1899deb55bbb922defdf0",
+  "producerStatus": "PRODUCED",
+  "modelUsed": "claude-haiku-5-5",
+  "factoryRelease": "1.4.0",
+  "tokenUsage": {
+    "inputTokens": 22594,
+    "outputTokens": 3780
+  }
+}

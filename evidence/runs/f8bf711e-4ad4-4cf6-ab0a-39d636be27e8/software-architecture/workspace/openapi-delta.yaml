@@ -1,0 +1,192 @@
+# OpenAPI DELTA (additive only) — DRAFT, NOT VERIFIED
+# Work order: wo-billing-invoice-export-001 | Run: f8bf711e-4ad4-4cf6-ab0a-39d636be27e8
+# Status: PRODUCED (draft). Stage BLOCKED.
+# - Baseline OpenAPI at protected base SHA was NOT available; this delta has NOT been
+#   merged into a baseline, and `oasdiff validate` / `oasdiff breaking` have NOT been run.
+# - No existing path (e.g. GET /v1/invoices) is modified by this delta.
+# - Security scheme name `bearerAuth` and permission naming are ASSUMPTIONS to be
+#   reconciled with the baseline spec.
+# - Describes Option B (async job) from architecture.md, pending owner decision.
+openapi: 3.1.0
+info:
+  title: Billing API — Invoice Export delta
+  version: 1.4.0-draft
+paths:
+  /v1/invoice-exports:
+    post:
+      operationId: createInvoiceExport
+      summary: Request a CSV export of the caller's tenant invoices
+      description: |
+        Tenant is derived from the authenticated principal. No tenant identifier is
+        accepted in query or body. CSV cells are protected against formula injection:
+        free-text values starting with '=', '+', '-', '@', TAB or CR are prefixed with a
+        single quote, and all fields are RFC 4180 quoted.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvoiceExportRequest'
+      responses:
+        '202':
+          description: Export job accepted
+          headers:
+            Location:
+              description: URL of the export job resource
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceExport'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '422':
+          description: Request exceeds export limits (date range or row count)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/Problem'
+  /v1/invoice-exports/{exportId}:
+    get:
+      operationId: getInvoiceExport
+      summary: Get export job status
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ExportId'
+      responses:
+        '200':
+          description: Export job
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceExport'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          description: Not found, or belongs to another tenant (indistinguishable by design)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /v1/invoice-exports/{exportId}/file:
+    get:
+      operationId: downloadInvoiceExport
+      summary: Download completed CSV export
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ExportId'
+      responses:
+        '200':
+          description: CSV file (UTF-8, RFC 4180, formula-injection escaped)
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              example: attachment; filename="invoices-export.csv"
+          content:
+            text/csv:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          description: Export not yet SUCCEEDED
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '410':
+          description: Export expired and file purged
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  parameters:
+    ExportId:
+      name: exportId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    Problem:
+      description: Error (RFC 9457 problem details)
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+  schemas:
+    InvoiceExportRequest:
+      type: object
+      additionalProperties: false
+      required: [from, to]
+      properties:
+        from:
+          type: string
+          format: date
+        to:
+          type: string
+          format: date
+        status:
+          type: array
+          items:
+            type: string
+          description: Optional invoice status filter (values to align with baseline Invoice schema)
+    InvoiceExport:
+      type: object
+      required: [id, state, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        state:
+          type: string
+          enum: [PENDING, RUNNING, SUCCEEDED, FAILED, EXPIRED]
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: [string, 'null']
+          format: date-time
+        expiresAt:
+          type: [string, 'null']
+          format: date-time
+        rowCount:
+          type: [integer, 'null']
+          minimum: 0
+        failureReason:
+          type: [string, 'null']
+    Problem:
+      type: object
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string

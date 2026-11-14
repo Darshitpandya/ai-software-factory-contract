@@ -7,7 +7,8 @@ pnpm-lock.yaml.bak
 coverage/
 .cache/
 *.tsbuildinfo
-evidence/runs/
+# Track specific evidence runs (real Claude artifacts) but not bulk output
+# evidence/runs/   ← removed: real artifacts should be in the repo for demo
 use_case_*_slide_dck.md
 TODO.md
 repos_run_iteration*_output_task.md

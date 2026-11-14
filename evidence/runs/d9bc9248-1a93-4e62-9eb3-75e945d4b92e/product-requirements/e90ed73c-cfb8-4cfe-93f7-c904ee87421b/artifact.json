@@ -1,0 +1,15 @@
+{
+  "id": "e90ed73c-cfb8-4cfe-93f7-c904ee87421b",
+  "runId": "d9bc9248-1a93-4e62-9eb3-75e945d4b92e",
+  "stage": "product-requirements",
+  "producedAt": "2026-11-14T05:49:17.989Z",
+  "files": [],
+  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "producerStatus": "PRODUCED",
+  "modelUsed": "claude-sonnet-5-5",
+  "factoryRelease": "1.4.0",
+  "tokenUsage": {
+    "inputTokens": 8178,
+    "outputTokens": 754
+  }
+}
