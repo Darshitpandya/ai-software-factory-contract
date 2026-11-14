@@ -12,7 +12,7 @@
  */
 
 import { Pool } from "pg";
-import { readFileSync } from "fs";
+import { readFileSync, readdirSync, existsSync } from "fs";
 import path from "path";
 import yaml from "js-yaml";
 import {
@@ -306,7 +306,7 @@ function computeRunMetrics(
   runId: string,
   storeDir = "evidence/runs"
 ): { totalInputTokens: number; totalOutputTokens: number; totalTokens: number; modelUsed: string; estimatedCostUsd: number } {
-  const { readdirSync, readFileSync: rfs, existsSync } = require("fs") as typeof import("fs");
+  const runDir = path.join(storeDir, runId);
   const runDir = path.join(storeDir, runId);
 
   let totalIn = 0;
@@ -323,7 +323,7 @@ function computeRunMetrics(
       for (const artDir of readdirSync(stageDir)) {
         const artFile = path.join(stageDir, artDir, "artifact.json");
         if (existsSync(artFile)) {
-          const art = JSON.parse(rfs(artFile, "utf-8")) as {
+          const art = JSON.parse(readFileSync(artFile, "utf-8")) as {
             tokenUsage?: { inputTokens?: number; outputTokens?: number };
             modelUsed?: string;
           };
