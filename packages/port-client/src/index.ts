@@ -84,7 +84,7 @@ export class PortClient {
 
   async searchEntities(
     blueprint: string,
-    query: Record<string, unknown>
+    _query: Record<string, unknown>
   ): Promise<PortEntity[]> {
     // GET all factoryRun entities and filter PENDING client-side
     // Port /entities/search has strict format — simpler to GET all and filter
