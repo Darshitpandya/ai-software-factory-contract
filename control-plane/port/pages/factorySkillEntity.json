@@ -1,0 +1,254 @@
+{
+  "identifier": "factorySkillEntity",
+  "title": "Factory Skill",
+  "icon": "Book",
+  "blueprint": "factorySkill",
+  "requiredQueryParams": [
+    "identifier",
+    "blueprint"
+  ],
+  "widgets": [
+    {
+      "id": "sk-grouper",
+      "type": "grouper",
+      "displayMode": "tabs",
+      "activeGroupUrlParam": "activeTab",
+      "groupsOrder": [
+        "Overview",
+        "Related Entities",
+        "Runs",
+        "Audit Log",
+        "Scorecards",
+        "Dashboard"
+      ],
+      "groups": [
+        {
+          "title": "Overview",
+          "widgets": [
+            {
+              "id": "sk-ov-dw",
+              "type": "dashboard-widget",
+              "layout": [
+                {
+                  "height": 500,
+                  "columns": [
+                    {
+                      "id": "sk-info",
+                      "size": 12
+                    }
+                  ]
+                },
+                {
+                  "height": 500,
+                  "columns": [
+                    {
+                      "id": "sk-ov-guide",
+                      "size": 12
+                    }
+                  ]
+                }
+              ],
+              "widgets": [
+                {
+                  "id": "sk-info",
+                  "type": "entity-info",
+                  "title": "Skill Details",
+                  "blueprint": "{{blueprint}}",
+                  "entity": "{{url.identifier}}",
+                  "hiddenQuery": [
+                    "skillId",
+                    "status",
+                    "factoryRelease",
+                    "factoryRelease"
+                  ],
+                  "createdBy": "user_TuYiIpMbcfjAouHC",
+                  "updatedBy": "user_TuYiIpMbcfjAouHC",
+                  "createdAt": "2026-11-13T03:47:29.549Z",
+                  "updatedAt": "2026-11-13T03:47:29.549Z"
+                },
+                {
+                  "id": "sk-ov-guide",
+                  "type": "markdown",
+                  "title": "About This Skill",
+                  "markdown": "### About This Skill\n\n| Field | Meaning |\n|---|---|\n| **Factory Stage** | Which of the 5 factory stages this skill belongs to |\n| **Version** | Skill version (locked in `skills.lock.json`) |\n| **SHA-256** | First 16 hex chars of content digest |\n| **GitHub URL** | 🔗 Click to open the full **rendered SKILL.md** on GitHub |\n| **Approval Status** | 🟢 APPROVED · 🟡 PENDING · ⬜ DEPRECATED · 🔴 REVOKED |\n\n**To view the full SKILL.md content:** click the **GitHub URL** link in the Details panel above. GitHub renders the markdown with proper formatting.\n\n**Factory stage colors:** 🔵 product-requirements · 🟣 software-architecture · 🟢 software-engineering · 🔴 security-compliance · 🟠 platform-operations"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Skill File",
+          "widgets": [
+            {
+              "id": "sk-file-dw",
+              "type": "dashboard-widget",
+              "layout": [
+                {
+                  "height": 500,
+                  "columns": [
+                    {
+                      "id": "sk-file-info",
+                      "size": 12
+                    }
+                  ]
+                }
+              ],
+              "widgets": [
+                {
+                  "id": "sk-file-info",
+                  "type": "entity-info",
+                  "title": "Skill File",
+                  "blueprint": "{{blueprint}}",
+                  "entity": "{{url.identifier}}",
+                  "hiddenQuery": [
+                    "$identifier",
+                    "$createdBy",
+                    "$updatedBy",
+                    "$blueprint",
+                    "$datasource",
+                    "$icon",
+                    "$team",
+                    "factory",
+                    "sha256",
+                    "skillId",
+                    "status",
+                    "factoryRelease",
+                    "factoryRelease"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Instructions",
+          "widgets": [
+            {
+              "id": "sk-instr-dw",
+              "type": "dashboard-widget",
+              "layout": [
+                {
+                  "height": 600,
+                  "columns": [
+                    {
+                      "id": "sk-instr-guide",
+                      "size": 12
+                    }
+                  ]
+                },
+                {
+                  "height": 450,
+                  "columns": [
+                    {
+                      "id": "sk-instr-lock",
+                      "size": 12
+                    }
+                  ]
+                }
+              ],
+              "widgets": [
+                {
+                  "id": "sk-instr-guide",
+                  "type": "markdown",
+                  "title": "AGENTS.md Context",
+                  "markdown": "### AGENTS.md context for this factory stage\n\nSkills run inside the full AGENTS.md working context. The AGENTS.md for the skill's factory stage is loaded into Claude before this skill executes.\n\n| Factory Stage | AGENTS.md |\n|---|---|\n| 📋 product-requirements | [View AGENTS.md ↗](https://github.com/Darshitpandya/ai-software-factory-contract/blob/main/factories/product-requirements/AGENTS.md) |\n| 🏛 software-architecture | [View AGENTS.md ↗](https://github.com/Darshitpandya/ai-software-factory-contract/blob/main/factories/software-architecture/AGENTS.md) |\n| ⚙️ software-engineering | [View AGENTS.md ↗](https://github.com/Darshitpandya/ai-software-factory-contract/blob/main/factories/software-engineering/AGENTS.md) |\n| 🛡 security-compliance | [View AGENTS.md ↗](https://github.com/Darshitpandya/ai-software-factory-contract/blob/main/factories/security-compliance/AGENTS.md) |\n| 🚀 platform-operations | [View AGENTS.md ↗](https://github.com/Darshitpandya/ai-software-factory-contract/blob/main/factories/platform-operations/AGENTS.md) |\n\n---\n\n### Skill authority boundary\n\nA skill is **NOT:**\n- An authorization to approve its own output — only the verifier or a human can mark ACCEPTED\n- A model selector — model is defined in `FactoryRelease.runtime.defaultModel` or `stageModels`\n- A permission grant — permissions come from the MCP tool allowlist in `tools.lock.json`\n\nA skill IS:\n- A versioned, testable, SHA-256 locked procedure\n- A set of preconditions, ordered steps, required deliverables, and verification rules\n- A definition of when to escalate or stop work"
+                },
+                {
+                  "id": "sk-instr-lock",
+                  "type": "markdown",
+                  "title": "SHA-256 Registry",
+                  "markdown": "### SHA-256 Registry Lock\n\n```bash\n# verify all 15 skill digests match skills.lock.json\npnpm factory registry:verify\n\n# recompute after editing any SKILL.md\npnpm lock-components\n```\n\nThe first 16 hex characters of the SHA-256 are shown in the Details panel above. The full digest is in `factory-releases/skills.lock.json`.\n\n**Any SKILL.md edit without running `pnpm lock-components` fails CI and blocks all factory runs using that release.**"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Related Entities",
+          "widgets": [
+            {
+              "id": "sk-rel",
+              "type": "grouper",
+              "title": "Related Entities",
+              "displayMode": "switch",
+              "groups": [
+                {
+                  "title": "Table",
+                  "icon": "Table",
+                  "widgets": [
+                    {
+                      "id": "sk-rel-tbl",
+                      "type": "table-entities-explorer-by-direction"
+                    }
+                  ]
+                },
+                {
+                  "title": "Graph",
+                  "icon": "Relation",
+                  "widgets": [
+                    {
+                      "id": "sk-rel-graph",
+                      "type": "graph-entities-explorer",
+                      "hiddenBlueprints": [],
+                      "dataset": {
+                        "combinator": "or",
+                        "rules": [
+                          {
+                            "operator": "relatedTo",
+                            "value": "{{url.identifier}}",
+                            "blueprint": "{{blueprint}}"
+                          },
+                          {
+                            "combinator": "and",
+                            "rules": [
+                              {
+                                "operator": "=",
+                                "value": "{{url.identifier}}",
+                                "property": "$identifier"
+                              },
+                              {
+                                "operator": "=",
+                                "value": "{{blueprint}}",
+                                "property": "$blueprint"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Runs",
+          "widgets": [
+            {
+              "id": "sk-runs",
+              "type": "runs-table",
+              "title": "Action Runs",
+              "query": {}
+            }
+          ]
+        },
+        {
+          "title": "Audit Log",
+          "widgets": [
+            {
+              "id": "sk-audit",
+              "type": "table-audit-log",
+              "query": {}
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "type": "entity",
+  "visibility": "org",
+  "protected": true,
+  "showInSidebar": false,
+  "section": "software_catalog"
+}

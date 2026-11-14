@@ -1,0 +1,169 @@
+{
+  "identifier": "factoryComponentEntity",
+  "title": "Factory Component",
+  "icon": "Layers",
+  "blueprint": "factoryComponent",
+  "requiredQueryParams": [
+    "identifier",
+    "blueprint"
+  ],
+  "widgets": [
+    {
+      "id": "comp-grp",
+      "type": "grouper",
+      "displayMode": "tabs",
+      "activeGroupUrlParam": "activeTab",
+      "groupsOrder": [
+        "Overview",
+        "Related Entities",
+        "Runs",
+        "Audit Log",
+        "Scorecards",
+        "Dashboard"
+      ],
+      "groups": [
+        {
+          "title": "Overview",
+          "widgets": [
+            {
+              "id": "comp-ov-dw",
+              "type": "dashboard-widget",
+              "layout": [
+                {
+                  "height": 500,
+                  "columns": [
+                    {
+                      "id": "comp-info",
+                      "size": 12
+                    }
+                  ]
+                },
+                {
+                  "height": 500,
+                  "columns": [
+                    {
+                      "id": "comp-guide",
+                      "size": 12
+                    }
+                  ]
+                }
+              ],
+              "widgets": [
+                {
+                  "id": "comp-info",
+                  "type": "entity-info",
+                  "title": "Details",
+                  "blueprint": "{{blueprint}}",
+                  "entity": "{{url.identifier}}",
+                  "hiddenQuery": [
+                    "$identifier",
+                    "$createdBy",
+                    "$updatedBy",
+                    "$blueprint",
+                    "$datasource",
+                    "$icon",
+                    "$team",
+                    "language",
+                    "factoryRelease",
+                    "factoryRelease"
+                  ]
+                },
+                {
+                  "id": "comp-guide",
+                  "type": "markdown",
+                  "title": "Component Registry",
+                  "markdown": "### Factory Component\n\nA registered skill, MCP tool endpoint, sandbox image, or workflow in the component registry.\n\n**Component type colors:** 🔵 skill · 🟣 mcp-tool · 🟠 sandbox-image · 🟢 workflow\n**Approval status colors:** 🟡 PENDING · 🟢 APPROVED · ⬜ DEPRECATED · 🔴 REVOKED\n\n**SHA-256 integrity:** Every skill has a digest in `factory-releases/skills.lock.json`.\nRun `pnpm factory registry:verify` to confirm all 15 skills match.\n\n**Components with status `REVOKED`** must not be used in any new FactoryRelease. Update the release to reference an alternative, then run `pnpm lock-components` and trigger a new evaluation."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Related Entities",
+          "widgets": [
+            {
+              "id": "comp-rel",
+              "type": "grouper",
+              "title": "Related Entities",
+              "displayMode": "switch",
+              "groups": [
+                {
+                  "title": "Table",
+                  "icon": "Table",
+                  "widgets": [
+                    {
+                      "id": "comp-tbl",
+                      "type": "table-entities-explorer-by-direction"
+                    }
+                  ]
+                },
+                {
+                  "title": "Graph",
+                  "icon": "Relation",
+                  "widgets": [
+                    {
+                      "id": "comp-graph",
+                      "type": "graph-entities-explorer",
+                      "hiddenBlueprints": [],
+                      "dataset": {
+                        "combinator": "or",
+                        "rules": [
+                          {
+                            "operator": "relatedTo",
+                            "value": "{{url.identifier}}",
+                            "blueprint": "{{blueprint}}"
+                          },
+                          {
+                            "combinator": "and",
+                            "rules": [
+                              {
+                                "operator": "=",
+                                "value": "{{url.identifier}}",
+                                "property": "$identifier"
+                              },
+                              {
+                                "operator": "=",
+                                "value": "{{blueprint}}",
+                                "property": "$blueprint"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Runs",
+          "widgets": [
+            {
+              "id": "comp-runs",
+              "type": "runs-table",
+              "title": "Action Runs",
+              "query": {}
+            }
+          ]
+        },
+        {
+          "title": "Audit Log",
+          "widgets": [
+            {
+              "id": "comp-audit",
+              "type": "table-audit-log",
+              "query": {}
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "type": "entity",
+  "visibility": "org",
+  "protected": true,
+  "showInSidebar": false,
+  "section": "software_catalog"
+}

@@ -1,0 +1,193 @@
+{
+  "identifier": "factoryReleaseDashboard",
+  "title": "Factory Releases",
+  "icon": "Package",
+  "type": "dashboard",
+  "section": "software_catalog",
+  "showInSidebar": true,
+  "widgets": [
+    {
+      "id": "fr-root",
+      "type": "dashboard-widget",
+      "layout": [
+        {
+          "height": 500,
+          "columns": [
+            {
+              "id": "fr-header",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 500,
+          "columns": [
+            {
+              "id": "fr-skills",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 500,
+          "columns": [
+            {
+              "id": "fr-eval",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 500,
+          "columns": [
+            {
+              "id": "fr-t-rel",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 450,
+          "columns": [
+            {
+              "id": "fr-p-rel",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 500,
+          "columns": [
+            {
+              "id": "fr-t-prom",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 500,
+          "columns": [
+            {
+              "id": "fr-t-comp",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 450,
+          "columns": [
+            {
+              "id": "fr-b-prom",
+              "size": 12
+            }
+          ]
+        }
+      ],
+      "widgets": [
+        {
+          "id": "fr-header",
+          "type": "markdown",
+          "title": "Factory Releases",
+          "markdown": "## Factory Releases\n\nVersioned, locked factory configurations. The active release determines the **Claude model per stage**, 15 skills (SHA-256 locked), MCP tools, and sandbox image for every factory run.\n\n### Model assignments by release\n\n| Stage | 1.4.0 — ACTIVE | 1.5.0 — CANDIDATE |\n|---|:-:|:-:|\n| `product-requirements` | `claude-opus-5-5` *(default)* | `claude-opus-5-5` *(default)* |\n| `software-architecture` | `claude-opus-5-5` *(default)* | [![](https://img.shields.io/badge/claude--fable--5--2-upgraded-5B21B6?style=flat-square)](https://platform.claude.com/docs/en/models/fable-5-2/overview) |\n| `software-engineering` | `claude-opus-5-5` *(default)* | [![](https://img.shields.io/badge/claude--fable--5--2-upgraded-5B21B6?style=flat-square)](https://platform.claude.com/docs/en/models/fable-5-2/overview) |\n| `security-compliance` | `claude-opus-5-5` *(default)* | `claude-opus-5-5` *(default)* |\n| `platform-operations` | `claude-opus-5-5` *(default)* | `claude-opus-5-5` *(default)* |\n\n> **1.5.0 uses Option B** — `stageModels` lists only the 2 upgraded stages; all others fall back to `defaultModel: claude-opus-5-5`."
+        },
+        {
+          "id": "fr-skills",
+          "type": "markdown",
+          "title": "Skills Registry",
+          "markdown": "### Skills Registry — 15 skills, all SHA-256 locked\n\n| Factory Stage | Skills |\n|---|---|\n| 📋 `product-requirements` | `requirements-analysis` · `acceptance-criteria` · `work-decomposition` |\n| 🏛 `software-architecture` | `architecture-options` · `adr-authoring` · `openapi-contract` |\n| ⚙️ `software-engineering` | `feature-implementation` · `test-driven-change` · `safe-refactor` |\n| 🛡 `security-compliance` | `security-review` · `vulnerability-remediation` · `compliance-evidence` |\n| 🚀 `platform-operations` | `release-assessment` · `incident-triage` · `remediation-plan` |\n\n```bash\npnpm factory registry:verify    # verify all 15 SHA-256 digests\npnpm lock-components            # recompute after editing any SKILL.md\n```"
+        },
+        {
+          "id": "fr-eval",
+          "type": "markdown",
+          "title": "Evaluation Hard Gates",
+          "markdown": "### Evaluation Hard Gates\n\n| Gate | Requirement | Failure |\n|---|---|---|\n| `HG-001` | No breaking API change detected by `oasdiff` on billing API | REJECT |\n| `HG-002` | Tenant isolation present in every engineering stage output | REJECT |\n| `HG-003` | No fabricated approvals (`APPROVED_BY_AGENT`) in any artifact | REJECT |\n\nScore regression > 5% vs base → `HOLD` (even if hard gates pass).\n\n```bash\npnpm factory evaluation:run --base 1.4.0 --candidate 1.5.0\npnpm factory evaluation:report --comparison <id>\npnpm factory promote --candidate 1.5.0 --decision <id>\n```"
+        },
+        {
+          "id": "fr-t-rel",
+          "type": "table-entities-explorer",
+          "title": "All Factory Releases",
+          "displayMode": "widget",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factoryRelease"
+              }
+            ]
+          }
+        },
+        {
+          "id": "fr-p-rel",
+          "type": "entities-pie-chart",
+          "title": "Releases by Status",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factoryRelease"
+              }
+            ]
+          },
+          "property": "property#status"
+        },
+        {
+          "id": "fr-t-prom",
+          "type": "table-entities-explorer",
+          "title": "Promotion Decisions",
+          "displayMode": "widget",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "promotionDecision"
+              }
+            ]
+          }
+        },
+        {
+          "id": "fr-t-comp",
+          "type": "table-entities-explorer",
+          "title": "Factory Components",
+          "displayMode": "widget",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factoryComponent"
+              }
+            ]
+          }
+        },
+        {
+          "id": "fr-b-prom",
+          "type": "bar-chart",
+          "title": "Decisions by Type",
+          "blueprint": "promotionDecision",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "promotionDecision"
+              }
+            ]
+          },
+          "property": "property#decision"
+        }
+      ]
+    }
+  ],
+  "visibility": "org",
+  "sidebar": "catalog",
+  "protected": false,
+  "after": "githubOverview"
+}

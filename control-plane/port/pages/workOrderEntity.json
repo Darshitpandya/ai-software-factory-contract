@@ -1,0 +1,165 @@
+{
+  "identifier": "workOrderEntity",
+  "title": "Work Order",
+  "icon": "Blueprint",
+  "type": "entity",
+  "blueprint": "workOrder",
+  "requiredQueryParams": [
+    "identifier",
+    "blueprint"
+  ],
+  "widgets": [
+    {
+      "id": "wo-grp",
+      "type": "grouper",
+      "displayMode": "tabs",
+      "activeGroupUrlParam": "activeTab",
+      "groupsOrder": [
+        "Overview",
+        "Related Entities",
+        "Runs",
+        "Audit Log"
+      ],
+      "groups": [
+        {
+          "title": "Overview",
+          "widgets": [
+            {
+              "id": "wo-ov-dw",
+              "type": "dashboard-widget",
+              "layout": [
+                {
+                  "height": 400,
+                  "columns": [
+                    {
+                      "id": "wo-action",
+                      "size": 12
+                    }
+                  ]
+                },
+                {
+                  "height": 500,
+                  "columns": [
+                    {
+                      "id": "wo-info",
+                      "size": 12
+                    }
+                  ]
+                }
+              ],
+              "widgets": [
+                {
+                  "id": "wo-action",
+                  "type": "action-card-widget",
+                  "title": "Run Factory",
+                  "actions": [
+                    {
+                      "action": "triggerFactoryRun"
+                    }
+                  ]
+                },
+                {
+                  "id": "wo-info",
+                  "type": "entity-info",
+                  "title": "Work Order Details",
+                  "blueprint": "{{blueprint}}",
+                  "entity": "{{url.identifier}}",
+                  "hiddenQuery": [
+                    "$identifier",
+                    "$createdBy",
+                    "$updatedBy",
+                    "$blueprint",
+                    "$datasource",
+                    "$icon",
+                    "$team"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Related Entities",
+          "widgets": [
+            {
+              "id": "wo-rel",
+              "type": "grouper",
+              "displayMode": "switch",
+              "groups": [
+                {
+                  "title": "Table",
+                  "icon": "Table",
+                  "widgets": [
+                    {
+                      "id": "wo-tbl",
+                      "type": "table-entities-explorer-by-direction"
+                    }
+                  ]
+                },
+                {
+                  "title": "Graph",
+                  "icon": "Relation",
+                  "widgets": [
+                    {
+                      "id": "wo-g",
+                      "type": "graph-entities-explorer",
+                      "hiddenBlueprints": [],
+                      "dataset": {
+                        "combinator": "or",
+                        "rules": [
+                          {
+                            "operator": "relatedTo",
+                            "value": "{{url.identifier}}",
+                            "blueprint": "{{blueprint}}"
+                          },
+                          {
+                            "combinator": "and",
+                            "rules": [
+                              {
+                                "operator": "=",
+                                "value": "{{url.identifier}}",
+                                "property": "$identifier"
+                              },
+                              {
+                                "operator": "=",
+                                "value": "{{blueprint}}",
+                                "property": "$blueprint"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Runs",
+          "widgets": [
+            {
+              "id": "wo-runs",
+              "type": "runs-table",
+              "title": "Action Runs",
+              "query": {}
+            }
+          ]
+        },
+        {
+          "title": "Audit Log",
+          "widgets": [
+            {
+              "id": "wo-audit",
+              "type": "table-audit-log",
+              "query": {}
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "visibility": "org",
+  "protected": true
+}

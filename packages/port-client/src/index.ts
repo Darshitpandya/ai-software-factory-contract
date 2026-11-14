@@ -116,7 +116,17 @@ export class PortClient {
 
   // ── Factory-specific helpers ─────────────────────────────────────────────
 
-  async upsertFactoryRun(run: FactoryRun, portActionRunId?: string): Promise<void> {
+  async upsertFactoryRun(
+    run: FactoryRun,
+    portActionRunId?: string,
+    metrics?: {
+      totalInputTokens?: number;
+      totalOutputTokens?: number;
+      totalTokens?: number;
+      modelUsed?: string;
+      estimatedCostUsd?: number;
+    }
+  ): Promise<void> {
     const entity: PortEntity = {
       identifier: run.id,
       blueprint: "factoryRun",
@@ -133,6 +143,12 @@ export class PortClient {
         ),
         totalDurationSeconds: run.totalDurationSeconds ?? null,
         stageResults: run.stages,
+        // Token and cost metrics — populated as stages complete
+        ...(metrics?.totalInputTokens !== undefined && { totalInputTokens: metrics.totalInputTokens }),
+        ...(metrics?.totalOutputTokens !== undefined && { totalOutputTokens: metrics.totalOutputTokens }),
+        ...(metrics?.totalTokens !== undefined && { totalTokens: metrics.totalTokens }),
+        ...(metrics?.modelUsed !== undefined && { modelUsed: metrics.modelUsed }),
+        ...(metrics?.estimatedCostUsd !== undefined && { estimatedCostUsd: Math.round(metrics.estimatedCostUsd * 10000) / 10000 }),
       },
       relations: {
         workOrder: run.workOrderId,

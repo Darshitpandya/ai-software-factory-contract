@@ -1,0 +1,113 @@
+{
+  "identifier": "$home",
+  "type": "home",
+  "widgets": [
+    {
+      "id": "home-dw",
+      "type": "dashboard-widget",
+      "layout": [
+        {
+          "height": 400,
+          "columns": [
+            {
+              "id": "home-actions",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 500,
+          "columns": [
+            {
+              "id": "home-board",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 450,
+          "columns": [
+            {
+              "id": "home-active",
+              "size": 12
+            }
+          ]
+        }
+      ],
+      "widgets": [
+        {
+          "id": "home-actions",
+          "type": "action-card-widget",
+          "title": "Factory Actions",
+          "actions": [
+            {
+              "action": "createWorkOrder"
+            },
+            {
+              "action": "triggerFactoryRun"
+            },
+            {
+              "action": "approveStage"
+            },
+            {
+              "action": "cancelFactoryRun"
+            }
+          ]
+        },
+        {
+          "id": "home-board",
+          "type": "board",
+          "title": "Factory Runs — by Stage",
+          "blueprintConfig": {
+            "factoryRun": {
+              "groupSettings": {
+                "groupBy": [
+                  "currentStage"
+                ]
+              }
+            }
+          },
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factoryRun"
+              }
+            ]
+          },
+          "entitiesQueryMode": "optimized"
+        },
+        {
+          "id": "home-active",
+          "type": "table-entities-explorer",
+          "title": "Active Factory Runs",
+          "displayMode": "widget",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factoryRun"
+              },
+              {
+                "operator": "in",
+                "property": "status",
+                "value": [
+                  "PENDING",
+                  "RUNNING",
+                  "BLOCKED",
+                  "WAITING_FOR_HUMAN"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "visibility": "org",
+  "protected": true
+}

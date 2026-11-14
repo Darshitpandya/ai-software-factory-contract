@@ -1,0 +1,167 @@
+{
+  "identifier": "promotionDecisionEntity",
+  "title": "Promotion Decision",
+  "icon": "Alert",
+  "blueprint": "promotionDecision",
+  "requiredQueryParams": [
+    "identifier",
+    "blueprint"
+  ],
+  "widgets": [
+    {
+      "id": "prom-grp",
+      "type": "grouper",
+      "displayMode": "tabs",
+      "activeGroupUrlParam": "activeTab",
+      "groupsOrder": [
+        "Overview",
+        "Related Entities",
+        "Runs",
+        "Audit Log",
+        "Scorecards",
+        "Dashboard"
+      ],
+      "groups": [
+        {
+          "title": "Overview",
+          "widgets": [
+            {
+              "id": "prom-ov-dw",
+              "type": "dashboard-widget",
+              "layout": [
+                {
+                  "height": 500,
+                  "columns": [
+                    {
+                      "id": "prom-info",
+                      "size": 12
+                    }
+                  ]
+                },
+                {
+                  "height": 500,
+                  "columns": [
+                    {
+                      "id": "prom-guide",
+                      "size": 12
+                    }
+                  ]
+                }
+              ],
+              "widgets": [
+                {
+                  "id": "prom-info",
+                  "type": "entity-info",
+                  "title": "Details",
+                  "blueprint": "{{blueprint}}",
+                  "entity": "{{url.identifier}}",
+                  "hiddenQuery": [
+                    "$identifier",
+                    "$createdBy",
+                    "$updatedBy",
+                    "$blueprint",
+                    "$datasource",
+                    "$icon",
+                    "$team",
+                    "evaluationSummary"
+                  ]
+                },
+                {
+                  "id": "prom-guide",
+                  "type": "markdown",
+                  "title": "Promotion Decision Guide",
+                  "markdown": "### Promotion Decision\n\nRecords an authorized decision to promote, hold, or reject a factory release candidate.\n\n**Decision colors:** 🟢 PROMOTE · 🟡 HOLD · 🔴 REJECT\n\n| Decision | Effect |\n|---|---|\n| `PROMOTE` | Activates the candidate; updates `factory-releases/active.yaml` |\n| `HOLD` | Evaluation recorded; active release unchanged |\n| `REJECT` | Candidate marked REJECTED; cannot be reused |\n\n**A PromotionDecision is immutable.** `allHardGatesPassed` must be `true` for a PROMOTE decision. `pnpm factory promote` enforces this check before writing to `active.yaml`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Related Entities",
+          "widgets": [
+            {
+              "id": "prom-rel",
+              "type": "grouper",
+              "title": "Related Entities",
+              "displayMode": "switch",
+              "groups": [
+                {
+                  "title": "Table",
+                  "icon": "Table",
+                  "widgets": [
+                    {
+                      "id": "prom-tbl",
+                      "type": "table-entities-explorer-by-direction"
+                    }
+                  ]
+                },
+                {
+                  "title": "Graph",
+                  "icon": "Relation",
+                  "widgets": [
+                    {
+                      "id": "prom-graph",
+                      "type": "graph-entities-explorer",
+                      "hiddenBlueprints": [],
+                      "dataset": {
+                        "combinator": "or",
+                        "rules": [
+                          {
+                            "operator": "relatedTo",
+                            "value": "{{url.identifier}}",
+                            "blueprint": "{{blueprint}}"
+                          },
+                          {
+                            "combinator": "and",
+                            "rules": [
+                              {
+                                "operator": "=",
+                                "value": "{{url.identifier}}",
+                                "property": "$identifier"
+                              },
+                              {
+                                "operator": "=",
+                                "value": "{{blueprint}}",
+                                "property": "$blueprint"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Runs",
+          "widgets": [
+            {
+              "id": "prom-runs",
+              "type": "runs-table",
+              "title": "Action Runs",
+              "query": {}
+            }
+          ]
+        },
+        {
+          "title": "Audit Log",
+          "widgets": [
+            {
+              "id": "prom-audit",
+              "type": "table-audit-log",
+              "query": {}
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "type": "entity",
+  "visibility": "org",
+  "protected": true,
+  "showInSidebar": false,
+  "section": "software_catalog"
+}

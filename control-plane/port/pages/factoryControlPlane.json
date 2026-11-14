@@ -1,0 +1,280 @@
+{
+  "identifier": "factoryControlPlane",
+  "title": "Factory Control Plane",
+  "icon": "Workflow",
+  "type": "dashboard",
+  "section": "software_catalog",
+  "showInSidebar": true,
+  "widgets": [
+    {
+      "id": "fcp-root",
+      "type": "dashboard-widget",
+      "layout": [
+        {
+          "height": 400,
+          "columns": [
+            {
+              "id": "fcp-global-actions",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 600,
+          "columns": [
+            {
+              "id": "fcp-board-stage",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 500,
+          "columns": [
+            {
+              "id": "fcp-board-status",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 400,
+          "columns": [
+            {
+              "id": "fcp-bar-stage",
+              "size": 6
+            },
+            {
+              "id": "fcp-bar-status",
+              "size": 6
+            }
+          ]
+        },
+        {
+          "height": 500,
+          "columns": [
+            {
+              "id": "fcp-active",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 500,
+          "columns": [
+            {
+              "id": "fcp-releases",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 500,
+          "columns": [
+            {
+              "id": "fcp-services",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 500,
+          "columns": [
+            {
+              "id": "fcp-workorders",
+              "size": 12
+            }
+          ]
+        }
+      ],
+      "widgets": [
+        {
+          "id": "fcp-global-actions",
+          "type": "action-card-widget",
+          "title": "Factory Actions",
+          "actions": [
+            {
+              "action": "createWorkOrder"
+            },
+            {
+              "action": "triggerFactoryRun"
+            },
+            {
+              "action": "approveStage"
+            },
+            {
+              "action": "cancelFactoryRun"
+            },
+            {
+              "action": "runFactoryEvaluation"
+            },
+            {
+              "action": "promoteFactoryRelease"
+            }
+          ]
+        },
+        {
+          "id": "fcp-board-stage",
+          "type": "board",
+          "title": "Factory Runs — by Stage",
+          "blueprintConfig": {
+            "factoryRun": {
+              "groupSettings": {
+                "groupBy": [
+                  "currentStage"
+                ]
+              }
+            }
+          },
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factoryRun"
+              }
+            ]
+          },
+          "entitiesQueryMode": "optimized"
+        },
+        {
+          "id": "fcp-board-status",
+          "type": "board",
+          "title": "Factory Runs — by Status",
+          "blueprintConfig": {
+            "factoryRun": {
+              "groupSettings": {
+                "groupBy": [
+                  "status"
+                ]
+              }
+            }
+          },
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factoryRun"
+              }
+            ]
+          },
+          "entitiesQueryMode": "optimized"
+        },
+        {
+          "id": "fcp-bar-stage",
+          "type": "bar-chart",
+          "title": "Stage Distribution",
+          "blueprint": "factoryRun",
+          "property": "property#currentStage",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factoryRun"
+              }
+            ]
+          }
+        },
+        {
+          "id": "fcp-bar-status",
+          "type": "bar-chart",
+          "title": "Status Distribution",
+          "blueprint": "factoryRun",
+          "property": "property#status",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factoryRun"
+              }
+            ]
+          }
+        },
+        {
+          "id": "fcp-active",
+          "type": "table-entities-explorer",
+          "title": "Active Runs",
+          "displayMode": "widget",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factoryRun"
+              },
+              {
+                "operator": "in",
+                "property": "status",
+                "value": [
+                  "PENDING",
+                  "RUNNING",
+                  "BLOCKED",
+                  "WAITING_FOR_HUMAN"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "fcp-releases",
+          "type": "table-entities-explorer",
+          "title": "Factory Releases",
+          "displayMode": "widget",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factoryRelease"
+              }
+            ]
+          }
+        },
+        {
+          "id": "fcp-services",
+          "type": "table-entities-explorer",
+          "title": "Consumer Services",
+          "displayMode": "widget",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "service"
+              }
+            ]
+          }
+        },
+        {
+          "id": "fcp-workorders",
+          "type": "table-entities-explorer",
+          "title": "Work Orders",
+          "displayMode": "widget",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "workOrder"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "sidebar": "catalog",
+  "visibility": "org",
+  "protected": false
+}

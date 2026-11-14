@@ -1,0 +1,138 @@
+{
+  "identifier": "serviceCatalog",
+  "title": "Service Catalog",
+  "icon": "Service",
+  "type": "dashboard",
+  "section": "software_catalog",
+  "showInSidebar": true,
+  "widgets": [
+    {
+      "id": "sc-root",
+      "type": "dashboard-widget",
+      "layout": [
+        {
+          "height": 500,
+          "columns": [
+            {
+              "id": "sc-header",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 500,
+          "columns": [
+            {
+              "id": "sc-t-all",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 450,
+          "columns": [
+            {
+              "id": "sc-p-lang",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 450,
+          "columns": [
+            {
+              "id": "sc-p-tier",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 450,
+          "columns": [
+            {
+              "id": "sc-b-lang",
+              "size": 12
+            }
+          ]
+        }
+      ],
+      "widgets": [
+        {
+          "id": "sc-header",
+          "type": "markdown",
+          "title": "Service Catalog",
+          "markdown": "## Service Catalog\n\nAll services registered with the AI Software Factory Contract.\n\n**To add a new service:**\n1. Add `.factory/repository-contract.yaml` to your repo\n2. Create a `service` entity in Port (`pnpm factory port:apply`)\n3. Install the Producer GitHub App and configure branch protection with the Verifier App's `factory-contract/acceptance` check\n4. See the [Adopter Guide](https://github.com/Darshitpandya/ai-software-factory-contract#adopter-guide)\n\n| Property | Billing API | Notification API |\n|---|---|---|\n| Language | `TypeScript` | `Python` |\n| Compatibility check | OpenAPI (`oasdiff`) | JSON Schema (event fixtures) |\n| Security constraint | Tenant isolation | PII redaction |\n| Factory Release | `1.4.0` | `1.4.0` |"
+        },
+        {
+          "id": "sc-t-all",
+          "type": "table-entities-explorer",
+          "title": "All Services",
+          "displayMode": "widget",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "service"
+              }
+            ]
+          }
+        },
+        {
+          "id": "sc-p-lang",
+          "type": "entities-pie-chart",
+          "title": "Services by Language",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "service"
+              }
+            ]
+          },
+          "property": "property#language"
+        },
+        {
+          "id": "sc-p-tier",
+          "type": "entities-pie-chart",
+          "title": "Services by Tier",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "service"
+              }
+            ]
+          },
+          "property": "property#tier"
+        },
+        {
+          "id": "sc-b-lang",
+          "type": "bar-chart",
+          "title": "Language Distribution",
+          "blueprint": "service",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "service"
+              }
+            ]
+          },
+          "property": "property#language"
+        }
+      ]
+    }
+  ],
+  "visibility": "org",
+  "sidebar": "catalog",
+  "protected": false,
+  "after": "factoryReleaseDashboard"
+}

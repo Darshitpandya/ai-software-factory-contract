@@ -154,7 +154,10 @@ async function processOneRun(
     await transitionStageStatus(pool, runId, stage, "RUNNING");
     // Push live status to Port immediately — stage starts
     const runAtStart = await getRun(pool, runId);
-    if (runAtStart) await port.upsertFactoryRun(runAtStart);
+    if (runAtStart) {
+      const metrics = computeRunMetrics(runId);
+      await port.upsertFactoryRun(runAtStart, undefined, metrics.totalTokens > 0 ? metrics : undefined);
+    }
 
     // Seed workspace with context files so Claude can read them
     const { writeFileSync, mkdirSync } = await import("fs");
@@ -213,7 +216,10 @@ async function processOneRun(
       await markRunFailed(pool, runId, stage, errMsg);
       // Push failed state to Port
       const runFailed = await getRun(pool, runId);
-      if (runFailed) await port.upsertFactoryRun(runFailed);
+      if (runFailed) {
+        const metrics = computeRunMetrics(runId);
+        await port.upsertFactoryRun(runFailed, undefined, metrics.totalTokens > 0 ? metrics : undefined);
+      }
       console.log(`  ✗ Stage ${stage} failed: ${errMsg}`);
       return;
     }
@@ -261,9 +267,15 @@ async function processOneRun(
       // For other stages: internal acceptance check
       await transitionStageStatus(pool, runId, stage, "ACCEPTED", { artifactRef: artifact.sha256 });
       console.log(`  ✓ Stage ${stage} ACCEPTED (internal check)`);
-      // Push accepted stage to Port immediately
+      // Push accepted stage + running metrics to Port immediately
       const runAfterAccept = await getRun(pool, runId);
-      if (runAfterAccept) await port.upsertFactoryRun(runAfterAccept);
+      if (runAfterAccept) {
+        const metrics = computeRunMetrics(runId);
+        await port.upsertFactoryRun(runAfterAccept, undefined, metrics);
+        if (metrics.totalTokens > 0) {
+          console.log(`  → tokens so far: ${metrics.totalTokens.toLocaleString()} | ~$${metrics.estimatedCostUsd.toFixed(4)}`);
+        }
+      }
     }
 
     // Check if all stages complete
@@ -274,12 +286,86 @@ async function processOneRun(
 
     if (allDone) {
       await markRunCompleted(pool, runId, artifact.sha256);
-      await port.upsertFactoryRun(updatedRun!);
-      console.log(`\n✓ Run ${runId} COMPLETED`);
+      const finalRun = await getRun(pool, runId);
+      if (finalRun) {
+        const finalMetrics = computeRunMetrics(runId);
+        await port.upsertFactoryRun(finalRun, undefined, finalMetrics);
+        console.log(`\n✓ Run ${runId} COMPLETED`);
+        console.log(`  model: ${finalMetrics.modelUsed}`);
+        console.log(`  total tokens: ${finalMetrics.totalTokens.toLocaleString()} (in: ${finalMetrics.totalInputTokens.toLocaleString()}, out: ${finalMetrics.totalOutputTokens.toLocaleString()})`);
+        console.log(`  estimated cost: $${finalMetrics.estimatedCostUsd.toFixed(4)}`);
+      }
     }
   } finally {
     await releaseLease(pool, runId);
   }
+}
+
+// ── Compute token metrics from evidence artifacts ─────────────────────────────
+function computeRunMetrics(
+  runId: string,
+  storeDir = "evidence/runs"
+): { totalInputTokens: number; totalOutputTokens: number; totalTokens: number; modelUsed: string; estimatedCostUsd: number } {
+  const { readdirSync, readFileSync: rfs, existsSync } = require("fs") as typeof import("fs");
+  const runDir = path.join(storeDir, runId);
+
+  let totalIn = 0;
+  let totalOut = 0;
+  let totalCost = 0;
+  const tokensByModel: Record<string, number> = {};
+
+  if (!existsSync(runDir)) return { totalInputTokens: 0, totalOutputTokens: 0, totalTokens: 0, modelUsed: "", estimatedCostUsd: 0 };
+
+  for (const stage of readdirSync(runDir)) {
+    const stageDir = path.join(runDir, stage);
+    if (stage === "workspace") continue;
+    try {
+      for (const artDir of readdirSync(stageDir)) {
+        const artFile = path.join(stageDir, artDir, "artifact.json");
+        if (existsSync(artFile)) {
+          const art = JSON.parse(rfs(artFile, "utf-8")) as {
+            tokenUsage?: { inputTokens?: number; outputTokens?: number };
+            modelUsed?: string;
+          };
+          const artIn = art.tokenUsage?.inputTokens ?? 0;
+          const artOut = art.tokenUsage?.outputTokens ?? 0;
+          const model = art.modelUsed ?? "claude-opus-5-5";
+          totalIn += artIn;
+          totalOut += artOut;
+          // Track tokens by model for dominant model detection
+          tokensByModel[model] = (tokensByModel[model] ?? 0) + artIn + artOut;
+          // Cost per artifact using its own model
+          totalCost += calculateCost(artIn, artOut, model);
+        }
+      }
+    } catch { /* skip unreadable dirs */ }
+  }
+
+  // Use the model that handled the most tokens as the display model
+  const modelUsed = Object.entries(tokensByModel)
+    .sort((a, b) => b[1] - a[1])[0]?.[0] ?? "claude-opus-5-5";
+
+  return {
+    totalInputTokens: totalIn,
+    totalOutputTokens: totalOut,
+    totalTokens: totalIn + totalOut,
+    modelUsed,
+    estimatedCostUsd: Math.round(totalCost * 10000) / 10000,
+  };
+}
+
+// ── Token cost pricing table ──────────────────────────────────────────────────
+const MODEL_PRICING: Record<string, { inputPerM: number; outputPerM: number }> = {
+  "claude-opus-5-5":   { inputPerM: 15.0,  outputPerM: 75.0  },
+  "claude-sonnet-5-5": { inputPerM: 3.0,   outputPerM: 15.0  },
+  "claude-haiku-5-5":  { inputPerM: 0.25,  outputPerM: 1.25  },
+  "claude-fable-5-2":  { inputPerM: 1.0,   outputPerM: 5.0   },
+};
+
+function calculateCost(inputTokens: number, outputTokens: number, model: string): number {
+  const pricing = MODEL_PRICING[model] ?? MODEL_PRICING["claude-opus-5-5"];
+  return (inputTokens / 1_000_000) * pricing.inputPerM +
+         (outputTokens / 1_000_000) * pricing.outputPerM;
 }
 
 function sleep(ms: number): Promise<void> {

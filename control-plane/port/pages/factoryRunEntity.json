@@ -1,0 +1,260 @@
+{
+  "identifier": "factoryRunEntity",
+  "title": "Factory Run",
+  "icon": "Workflow",
+  "type": "entity",
+  "blueprint": "factoryRun",
+  "requiredQueryParams": [
+    "identifier",
+    "blueprint"
+  ],
+  "widgets": [
+    {
+      "id": "run-grp",
+      "type": "grouper",
+      "displayMode": "tabs",
+      "activeGroupUrlParam": "activeTab",
+      "groupsOrder": [
+        "Overview",
+        "Stage Progress",
+        "Related Entities",
+        "Runs",
+        "Audit Log"
+      ],
+      "groups": [
+        {
+          "title": "Overview",
+          "widgets": [
+            {
+              "id": "run-ov-dw",
+              "type": "dashboard-widget",
+              "layout": [
+                {
+                  "height": 400,
+                  "columns": [
+                    {
+                      "id": "run-actions",
+                      "size": 12
+                    }
+                  ]
+                },
+                {
+                  "height": 500,
+                  "columns": [
+                    {
+                      "id": "run-info",
+                      "size": 12
+                    }
+                  ]
+                }
+              ],
+              "widgets": [
+                {
+                  "id": "run-actions",
+                  "type": "action-card-widget",
+                  "title": "Run Actions",
+                  "actions": [
+                    {
+                      "action": "approveStage"
+                    },
+                    {
+                      "action": "cancelFactoryRun"
+                    },
+                    {
+                      "action": "resumeFactoryRun"
+                    }
+                  ]
+                },
+                {
+                  "id": "run-info",
+                  "type": "entity-info",
+                  "title": "Run Details",
+                  "blueprint": "{{blueprint}}",
+                  "entity": "{{url.identifier}}",
+                  "hiddenQuery": [
+                    "$identifier",
+                    "$createdBy",
+                    "$updatedBy",
+                    "$blueprint",
+                    "$datasource",
+                    "$icon",
+                    "$team"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Stage Progress",
+          "widgets": [
+            {
+              "id": "run-stages-dw",
+              "type": "dashboard-widget",
+              "layout": [
+                {
+                  "height": 400,
+                  "columns": [
+                    {
+                      "id": "run-s1",
+                      "size": 12
+                    }
+                  ]
+                },
+                {
+                  "height": 400,
+                  "columns": [
+                    {
+                      "id": "run-s2",
+                      "size": 12
+                    }
+                  ]
+                },
+                {
+                  "height": 400,
+                  "columns": [
+                    {
+                      "id": "run-s3",
+                      "size": 12
+                    }
+                  ]
+                },
+                {
+                  "height": 400,
+                  "columns": [
+                    {
+                      "id": "run-s4",
+                      "size": 12
+                    }
+                  ]
+                },
+                {
+                  "height": 400,
+                  "columns": [
+                    {
+                      "id": "run-s5",
+                      "size": 12
+                    }
+                  ]
+                }
+              ],
+              "widgets": [
+                {
+                  "id": "run-s1",
+                  "type": "markdown",
+                  "title": "Stage 1 — Product Requirements",
+                  "markdown": "**Output:** `product-spec.md` · `acceptance.yaml` · `work-items.json`\n**Gate:** Internal acceptance\n**Skills:** requirements-analysis · acceptance-criteria · work-decomposition"
+                },
+                {
+                  "id": "run-s2",
+                  "type": "markdown",
+                  "title": "Stage 2 — Software Architecture",
+                  "markdown": "**Output:** `architecture.md` · `openapi-delta.yaml` · `adr.md`\n**Gate:** Internal acceptance\n**Skills:** architecture-options · adr-authoring"
+                },
+                {
+                  "id": "run-s3",
+                  "type": "markdown",
+                  "title": "Stage 3 — Software Engineering ← Trusted Verifier",
+                  "markdown": "**Output:** `implementation-notes.md` · `pr-description.md`\n**Gate:** `factory-contract/acceptance` check posted by `ai-factory-verifier` App — independent oasdiff\n**Breaking change demo:** [PR #2](https://github.com/Darshitpandya/factory-reference-billing-api/pull/2)"
+                },
+                {
+                  "id": "run-s4",
+                  "type": "markdown",
+                  "title": "Stage 4 — Security & Compliance",
+                  "markdown": "**Output:** `security-review.md` · `compliance-checklist.md`\n**Gate:** Internal acceptance\n**Skills:** security-review · compliance-evidence · vulnerability-remediation"
+                },
+                {
+                  "id": "run-s5",
+                  "type": "markdown",
+                  "title": "Stage 5 — Platform Operations",
+                  "markdown": "**Output:** `deployment.json` · `health-evidence.json` · `runbook.md`\n**Gate:** Internal acceptance\n**Skills:** incident-triage · release-assessment · remediation-plan"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Related Entities",
+          "widgets": [
+            {
+              "id": "run-rel",
+              "type": "grouper",
+              "displayMode": "switch",
+              "groups": [
+                {
+                  "title": "Table",
+                  "icon": "Table",
+                  "widgets": [
+                    {
+                      "id": "run-tbl",
+                      "type": "table-entities-explorer-by-direction"
+                    }
+                  ]
+                },
+                {
+                  "title": "Graph",
+                  "icon": "Relation",
+                  "widgets": [
+                    {
+                      "id": "run-g",
+                      "type": "graph-entities-explorer",
+                      "hiddenBlueprints": [],
+                      "dataset": {
+                        "combinator": "or",
+                        "rules": [
+                          {
+                            "operator": "relatedTo",
+                            "value": "{{url.identifier}}",
+                            "blueprint": "{{blueprint}}"
+                          },
+                          {
+                            "combinator": "and",
+                            "rules": [
+                              {
+                                "operator": "=",
+                                "value": "{{url.identifier}}",
+                                "property": "$identifier"
+                              },
+                              {
+                                "operator": "=",
+                                "value": "{{blueprint}}",
+                                "property": "$blueprint"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Runs",
+          "widgets": [
+            {
+              "id": "run-runs",
+              "type": "runs-table",
+              "title": "Action Runs",
+              "query": {}
+            }
+          ]
+        },
+        {
+          "title": "Audit Log",
+          "widgets": [
+            {
+              "id": "run-audit",
+              "type": "table-audit-log",
+              "query": {}
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "visibility": "org",
+  "protected": true
+}
