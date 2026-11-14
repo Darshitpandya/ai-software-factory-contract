@@ -109,6 +109,25 @@ async function processOneRun(
     const releasePath = `factory-releases/${run.factoryRelease}/factory-release.yaml`;
     const release = yaml.load(readFileSync(releasePath, "utf-8")) as FactoryReleaseConfig;
 
+    // Fetch full work order from Port to give Claude proper context
+    let workOrderContext: Record<string, unknown> = { id: run.workOrderId };
+    try {
+      const wo = await port.getEntity("workOrder", run.workOrderId);
+      workOrderContext = {
+        id: wo.identifier,
+        title: wo.title ?? run.workOrderId,
+        scope: wo.properties["scope"] ?? "",
+        requestedBy: wo.properties["requestedBy"] ?? "",
+        releaseVersion: wo.properties["releaseVersion"] ?? run.factoryRelease,
+        targetService: wo.properties["targetService"] ?? "",
+        status: wo.properties["status"] ?? "PENDING",
+      };
+      console.log(`  ✓ WorkOrder context loaded: "${workOrderContext.title}"`);
+      console.log(`  scope: ${workOrderContext.scope}`);
+    } catch (e) {
+      console.warn(`  ⚠ Could not fetch WorkOrder from Port: ${e} — using minimal context`);
+    }
+
     // Create sandbox session
     const session = await sandbox.createSession({
       mode: process.env["OPENSANDBOX_URL"] ? "opensandbox" : "local-docker",
@@ -121,13 +140,28 @@ async function processOneRun(
     await transitionStageStatus(pool, runId, stage, "RUNNING");
     await port.upsertFactoryRun(run);
 
+    // Seed workspace with context files so Claude can read them
+    const { writeFileSync, mkdirSync } = await import("fs");
+    mkdirSync(session.workspaceDir, { recursive: true });
+    writeFileSync(
+      path.join(session.workspaceDir, "work-order.json"),
+      JSON.stringify({ ...workOrderContext, runId, factoryRelease: run.factoryRelease, stage }, null, 2),
+      "utf-8"
+    );
+    writeFileSync(
+      path.join(session.workspaceDir, "README.md"),
+      `# Factory Run Workspace\n\nRun ID: ${runId}\nStage: ${stage}\nWork Order: ${workOrderContext.title}\nScope: ${workOrderContext.scope}\n\nRead \`work-order.json\` for full context. Write output files here, then call \`report_stage_output\`.\n`,
+      "utf-8"
+    );
+    console.log(`  ✓ Workspace seeded: ${session.workspaceDir}`);
+
     // Execute stage via Claude
     const result = await executor.executeStage({
       stage,
       runId,
       workOrderId: run.workOrderId,
       factoryRelease: release,
-      contextSnapshot: { workOrder: { id: run.workOrderId } },
+      contextSnapshot: { workOrder: workOrderContext },
       workspaceDir: session.workspaceDir,
       allowedTools: ["read_file", "write_file", "run_command", "list_directory", "report_stage_output"],
     });
@@ -147,9 +181,10 @@ async function processOneRun(
     await sandbox.destroySession(session);
 
     if (!result.success) {
-      await transitionStageStatus(pool, runId, stage, "REJECTED", { error: result.error });
-      await markRunFailed(pool, runId, stage, result.error ?? "Stage execution failed");
-      console.log(`  ✗ Stage ${stage} failed: ${result.error}`);
+      const errMsg = result.error ?? (result.producedFiles.length === 0 ? "Stage produced no output files — Claude did not call report_stage_output" : "Stage execution failed");
+      await transitionStageStatus(pool, runId, stage, "REJECTED", { error: errMsg });
+      await markRunFailed(pool, runId, stage, errMsg);
+      console.log(`  ✗ Stage ${stage} failed: ${errMsg}`);
       return;
     }
 

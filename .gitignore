@@ -11,3 +11,10 @@ evidence/runs/
 use_case_*_slide_dck.md
 TODO.md
 repos_run_iteration*_output_task.md
+platforms_tools_slides_info.md
+# Terraform state and local config (secrets)
+infra/terraform/.terraform/
+infra/terraform/.terraform.lock.hcl
+infra/terraform/terraform.tfstate
+infra/terraform/terraform.tfstate.backup
+infra/terraform/terraform.tfvars

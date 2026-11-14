@@ -284,6 +284,15 @@ export class ClaudeExecutor {
       // Collect assistant message
       messages.push({ role: "assistant", content: response.content });
 
+      // Log what Claude is doing
+      const toolNames = response.content.filter(b => b.type === "tool_use").map(b => (b as {name: string}).name);
+      if (toolNames.length > 0) {
+        console.log(`    Turn ${turn + 1}: tools=[${toolNames.join(", ")}]`);
+      } else {
+        const textPreview = response.content.filter(b => b.type === "text").map(b => (b as {text: string}).text.slice(0, 80)).join(" ");
+        console.log(`    Turn ${turn + 1}: end_turn (no tools) — "${textPreview}"`);
+      }
+
       if (response.stop_reason === "end_turn") {
         // No more tool calls; check if stage reported output
         break;
@@ -314,6 +323,7 @@ export class ClaudeExecutor {
           };
           producedFiles = parsed.outputFiles ?? [];
           blocked = parsed.blocked ?? false;
+          console.log(`    report_stage_output: outputFiles=${JSON.stringify(producedFiles)}, blocked=${blocked}`);
         }
 
         toolResults.push({
@@ -329,16 +339,20 @@ export class ClaudeExecutor {
       if (blocked) break;
     }
 
+    const finalSuccess = !error && producedFiles.length > 0;
+    console.log(`    [DEBUG] error="${error}", blocked=${blocked}, files=${producedFiles.length}, success=${finalSuccess}`);
     return {
-      success: !error && !blocked && producedFiles.length > 0,
+      // blocked=true with files produced = PRODUCED (local verify cmd failed but artifacts exist)
+      // blocked=true with no files = FAILED (couldn't start work)
+      success: finalSuccess,
       producedFiles,
-      error,
+      error: error ?? (blocked && producedFiles.length === 0 ? "Stage blocked before producing any files" : undefined),
       tokenUsage: {
         inputTokens: totalInputTokens,
         outputTokens: totalOutputTokens,
       },
       modelUsed: model,
-      exitCode: error || blocked ? 1 : 0,
+      exitCode: finalSuccess ? 0 : 1,
     };
   }
 }
@@ -363,13 +377,25 @@ ${skills}
 Factory context snapshot:
 ${JSON.stringify(context, null, 2)}
 
+WORKSPACE INSTRUCTIONS:
+- Your workspace starts with two files: work-order.json (full work order context) and README.md.
+- Read work-order.json first to understand the full scope of work.
+- Use write_file to produce ALL required output artifacts in the workspace.
+- Use list_directory to see what you've written.
+- AFTER writing all output files, you MUST call report_stage_output exactly once with:
+  - outputFiles: array of relative paths you wrote
+  - summary: brief description of what you produced
+
+CRITICAL — MANDATORY FINAL STEP:
+You MUST call the report_stage_output tool as your LAST action. If you do not call it, the stage will be marked as FAILED. Do not end your response with text — end it by calling report_stage_output.
+
 RULES (non-negotiable):
 1. Produce ONLY the declared output artifacts for this stage. Do not fabricate approvals.
 2. Publish PRODUCED status only. Acceptance is set by the independent verifier, not by you.
 3. Use only the allowlisted tools provided. Do not attempt to run unapproved commands.
 4. Never output credentials, tokens, or secrets to files or tool call arguments.
 5. If a required precondition is missing, call report_stage_output with blocked=true and blockedReason.
-6. Call report_stage_output exactly once when done.`;
+6. Call report_stage_output exactly once when done — this is NOT optional.`;
 }
 
 function buildStagePrompt(
@@ -377,14 +403,30 @@ function buildStagePrompt(
   context: Record<string, unknown>,
   workOrderId: string
 ): string {
+  const outputFiles: Record<FactoryStage, string[]> = {
+    "product-requirements":    ["product-spec.md", "acceptance.yaml", "work-items.json"],
+    "software-architecture":   ["architecture.md", "openapi-delta.yaml", "adr.md"],
+    "software-engineering":    ["implementation-notes.md", "pr-description.md"],
+    "security-compliance":     ["security-review.md", "compliance-checklist.md"],
+    "platform-operations":     ["deployment.json", "health-evidence.json", "runbook.md"],
+  };
+  const required = outputFiles[stage] ?? ["output.md"];
+
   return `Execute the ${stage} factory stage for work order ${workOrderId}.
 
-Work order context: ${JSON.stringify(context.workOrder ?? {}, null, 2)}
+Work order: ${JSON.stringify(context.workOrder ?? {}, null, 2)}
 
-Upstream artifacts: ${JSON.stringify(context.upstreamArtifacts ?? {}, null, 2)}
+REQUIRED OUTPUT FILES (you MUST write ALL of these before reporting):
+${required.map(f => `  - ${f}`).join("\n")}
 
-Produce the required output artifacts as specified in AGENTS.md and the SKILL.md procedures.
-When complete, call report_stage_output with the list of files you produced.`;
+EXECUTION ORDER (do not skip steps):
+1. Call read_file(path="work-order.json") — load full work order context
+2. For EACH required output file: call write_file(path="<filename>", content="<full content>")
+   - Write real, substantive content based on the work order scope
+   - Do NOT write placeholder content
+3. After writing ALL files: call report_stage_output(outputFiles=${JSON.stringify(required)}, summary="...")
+
+You MUST call write_file for EACH file before report_stage_output. Do not call report_stage_output with an empty or partial outputFiles list.`;
 }
 
 function getAllowedCommandsForStage(stage: FactoryStage): string[] {

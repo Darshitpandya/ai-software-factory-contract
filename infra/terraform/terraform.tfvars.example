@@ -1,0 +1,12 @@
+# Copy to terraform.tfvars and fill in real values — never commit terraform.tfvars
+# Usage: cp terraform.tfvars.example terraform.tfvars
+
+port_client_id     = "REPLACE_WITH_PORT_CLIENT_ID"
+port_client_secret = "REPLACE_WITH_PORT_CLIENT_SECRET"
+port_base_url      = "https://api.getport.io"
+
+github_token = "REPLACE_WITH_GITHUB_TOKEN"
+github_owner = "REPLACE_WITH_GITHUB_USERNAME_OR_ORG"
+
+billing_repo_name      = "factory-reference-billing-api"
+notification_repo_name = "factory-reference-notification-api"

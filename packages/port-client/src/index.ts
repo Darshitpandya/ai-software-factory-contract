@@ -59,10 +59,12 @@ export class PortClient {
   // ── Entity operations ───────────────────────────────────────────────────
 
   async getEntity(blueprint: string, identifier: string): Promise<PortEntity> {
-    return this.request<PortEntity>(
+    // Port API wraps single-entity responses: { entity: { ... } }
+    const result = await this.request<{ entity: PortEntity }>(
       "GET",
       `/blueprints/${blueprint}/entities/${identifier}`
     );
+    return result.entity ?? (result as unknown as PortEntity);
   }
 
   async upsertEntity(entity: PortEntity): Promise<PortEntity> {
@@ -133,7 +135,10 @@ export class PortClient {
       },
       relations: {
         workOrder: run.workOrderId,
-        factoryRelease: run.factoryRelease,
+        // Port entity IDs are prefixed: "factory-release-1.4.0", not "1.4.0"
+        factoryRelease: run.factoryRelease.startsWith("factory-release-")
+          ? run.factoryRelease
+          : `factory-release-${run.factoryRelease}`,
       },
     };
     await this.upsertEntity(entity);
