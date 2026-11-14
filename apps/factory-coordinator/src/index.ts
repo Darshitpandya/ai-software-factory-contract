@@ -307,7 +307,6 @@ function computeRunMetrics(
   storeDir = "evidence/runs"
 ): { totalInputTokens: number; totalOutputTokens: number; totalTokens: number; modelUsed: string; estimatedCostUsd: number } {
   const runDir = path.join(storeDir, runId);
-  const runDir = path.join(storeDir, runId);
 
   let totalIn = 0;
   let totalOut = 0;
