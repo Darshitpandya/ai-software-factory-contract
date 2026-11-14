@@ -125,6 +125,7 @@ export class PortClient {
       totalTokens?: number;
       modelUsed?: string;
       estimatedCostUsd?: number;
+      stageModelBreakdown?: string;
     }
   ): Promise<void> {
     const entity: PortEntity = {
@@ -149,6 +150,7 @@ export class PortClient {
         ...(metrics?.totalTokens !== undefined && { totalTokens: metrics.totalTokens }),
         ...(metrics?.modelUsed !== undefined && { modelUsed: metrics.modelUsed }),
         ...(metrics?.estimatedCostUsd !== undefined && { estimatedCostUsd: Math.round(metrics.estimatedCostUsd * 10000) / 10000 }),
+        ...(metrics?.stageModelBreakdown !== undefined && { stageModelBreakdown: metrics.stageModelBreakdown }),
       },
       relations: {
         workOrder: run.workOrderId,

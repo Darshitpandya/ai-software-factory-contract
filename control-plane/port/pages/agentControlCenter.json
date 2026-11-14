@@ -1,0 +1,221 @@
+{
+  "identifier": "agentControlCenter",
+  "title": "Agent Control Center",
+  "icon": "Blueprint",
+  "type": "dashboard",
+  "section": "software_catalog",
+  "showInSidebar": true,
+  "widgets": [
+    {
+      "id": "acc-root",
+      "type": "dashboard-widget",
+      "layout": [
+        {
+          "height": 400,
+          "columns": [
+            {
+              "id": "acc-actions",
+              "size": 7
+            },
+            {
+              "id": "acc-links",
+              "size": 5
+            }
+          ]
+        },
+        {
+          "height": 400,
+          "columns": [
+            {
+              "id": "acc-bar",
+              "size": 6
+            },
+            {
+              "id": "acc-bar2",
+              "size": 6
+            }
+          ]
+        },
+        {
+          "height": 500,
+          "columns": [
+            {
+              "id": "acc-board",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 450,
+          "columns": [
+            {
+              "id": "acc-runs",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 450,
+          "columns": [
+            {
+              "id": "acc-skills",
+              "size": 12
+            }
+          ]
+        }
+      ],
+      "widgets": [
+        {
+          "id": "acc-actions",
+          "type": "action-card-widget",
+          "title": "Control Plane Actions",
+          "actions": [
+            {
+              "action": "triggerFactoryRun"
+            },
+            {
+              "action": "approveStage"
+            },
+            {
+              "action": "cancelFactoryRun"
+            }
+          ]
+        },
+        {
+          "id": "acc-links",
+          "type": "links-widget",
+          "title": "Agent Specifications",
+          "links": [
+            {
+              "title": "PRD Agent — AGENTS.md",
+              "url": "https://github.com/Darshitpandya/ai-software-factory-contract/blob/main/factories/product-requirements/AGENTS.md"
+            },
+            {
+              "title": "ARCH Agent — AGENTS.md",
+              "url": "https://github.com/Darshitpandya/ai-software-factory-contract/blob/main/factories/software-architecture/AGENTS.md"
+            },
+            {
+              "title": "ENG Agent — AGENTS.md",
+              "url": "https://github.com/Darshitpandya/ai-software-factory-contract/blob/main/factories/software-engineering/AGENTS.md"
+            },
+            {
+              "title": "SEC Agent — AGENTS.md",
+              "url": "https://github.com/Darshitpandya/ai-software-factory-contract/blob/main/factories/security-compliance/AGENTS.md"
+            },
+            {
+              "title": "OPS Agent — AGENTS.md",
+              "url": "https://github.com/Darshitpandya/ai-software-factory-contract/blob/main/factories/platform-operations/AGENTS.md"
+            },
+            {
+              "title": "🔒 Trusted Verifier",
+              "url": "https://web-production-fff93264.up.railway.app/health"
+            }
+          ]
+        },
+        {
+          "id": "acc-bar",
+          "type": "bar-chart",
+          "title": "Token Usage — by Model",
+          "blueprint": "factoryRun",
+          "property": "property#modelUsed",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factoryRun"
+              },
+              {
+                "operator": "isNotEmpty",
+                "property": "modelUsed"
+              }
+            ]
+          }
+        },
+        {
+          "id": "acc-bar2",
+          "type": "bar-chart",
+          "title": "Runs — by Current Stage",
+          "blueprint": "factoryRun",
+          "property": "property#currentStage",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factoryRun"
+              }
+            ]
+          }
+        },
+        {
+          "id": "acc-board",
+          "type": "board",
+          "title": "Factory Runs — Pipeline Status",
+          "blueprintConfig": {
+            "factoryRun": {
+              "groupSettings": {
+                "groupBy": [
+                  "currentStage"
+                ]
+              }
+            }
+          },
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factoryRun"
+              }
+            ]
+          },
+          "entitiesQueryMode": "optimized"
+        },
+        {
+          "id": "acc-runs",
+          "type": "table-entities-explorer",
+          "title": "Recent Factory Runs — Token & Cost",
+          "displayMode": "widget",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factoryRun"
+              },
+              {
+                "operator": "isNotEmpty",
+                "property": "totalTokens"
+              }
+            ]
+          }
+        },
+        {
+          "id": "acc-skills",
+          "type": "table-entities-explorer",
+          "title": "Skill Registry — All 15 Skills Locked",
+          "displayMode": "widget",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factorySkill"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "sidebar": "catalog",
+  "visibility": "org",
+  "protected": false,
+  "after": "factoryControlPlane"
+}

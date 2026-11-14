@@ -158,6 +158,10 @@
                 "operator": "=",
                 "property": "$blueprint",
                 "value": "factoryRun"
+              },
+              {
+                "operator": "isNotEmpty",
+                "property": "status"
               }
             ]
           },

@@ -1,0 +1,146 @@
+{
+  "identifier": "githubOverview",
+  "title": "GitHub Control Center",
+  "icon": "Github",
+  "type": "dashboard",
+  "section": "software_catalog",
+  "showInSidebar": true,
+  "widgets": [
+    {
+      "id": "go-root",
+      "type": "dashboard-widget",
+      "layout": [
+        {
+          "height": 400,
+          "columns": [
+            {
+              "id": "go-actions",
+              "size": 7
+            },
+            {
+              "id": "go-links",
+              "size": 5
+            }
+          ]
+        },
+        {
+          "height": 500,
+          "columns": [
+            {
+              "id": "go-board",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 450,
+          "columns": [
+            {
+              "id": "go-runs",
+              "size": 12
+            }
+          ]
+        }
+      ],
+      "widgets": [
+        {
+          "id": "go-actions",
+          "type": "action-card-widget",
+          "title": "Factory Trigger",
+          "actions": [
+            {
+              "action": "triggerFactoryRun"
+            },
+            {
+              "action": "approveStage"
+            }
+          ]
+        },
+        {
+          "id": "go-links",
+          "type": "links-widget",
+          "title": "Repository Links",
+          "links": [
+            {
+              "title": "🏭 Factory Contract",
+              "url": "https://github.com/Darshitpandya/ai-software-factory-contract"
+            },
+            {
+              "title": "🔒 Trusted Verifier",
+              "url": "https://github.com/Darshitpandya/ai-factory-trusted-verifier"
+            },
+            {
+              "title": "💳 Billing API (consumer)",
+              "url": "https://github.com/Darshitpandya/factory-reference-billing-api"
+            },
+            {
+              "title": "📬 Notification API (consumer)",
+              "url": "https://github.com/Darshitpandya/factory-reference-notification-api"
+            },
+            {
+              "title": "⚡ Verifier Health",
+              "url": "https://web-production-fff93264.up.railway.app/health"
+            },
+            {
+              "title": "❌ Breaking Change Demo — PR #2",
+              "url": "https://github.com/Darshitpandya/factory-reference-billing-api/pull/2"
+            },
+            {
+              "title": "✅ Notification Acceptance — PR #1",
+              "url": "https://github.com/Darshitpandya/factory-reference-notification-api/pull/1"
+            }
+          ]
+        },
+        {
+          "id": "go-board",
+          "type": "board",
+          "title": "Factory Runs — by Status",
+          "blueprintConfig": {
+            "factoryRun": {
+              "groupSettings": {
+                "groupBy": [
+                  "status"
+                ]
+              }
+            }
+          },
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factoryRun"
+              },
+              {
+                "operator": "isNotEmpty",
+                "property": "status"
+              }
+            ]
+          },
+          "entitiesQueryMode": "optimized"
+        },
+        {
+          "id": "go-runs",
+          "type": "table-entities-explorer",
+          "title": "All Factory Runs",
+          "displayMode": "widget",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factoryRun"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "sidebar": "catalog",
+  "visibility": "org",
+  "protected": false,
+  "after": "skillsControlCenter"
+}

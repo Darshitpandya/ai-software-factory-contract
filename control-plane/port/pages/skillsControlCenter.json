@@ -1,7 +1,7 @@
 {
   "identifier": "skillsControlCenter",
-  "title": "Skills Control Center",
-  "icon": "Trophy",
+  "title": "Skills Registry",
+  "icon": "Book",
   "type": "dashboard",
   "section": "software_catalog",
   "showInSidebar": true,
@@ -14,25 +14,29 @@
           "height": 500,
           "columns": [
             {
-              "id": "scc-header",
+              "id": "scc-board",
               "size": 12
             }
           ]
         },
         {
-          "height": 500,
+          "height": 400,
           "columns": [
             {
-              "id": "scc-registry",
-              "size": 12
+              "id": "scc-bar",
+              "size": 6
+            },
+            {
+              "id": "scc-bar2",
+              "size": 6
             }
           ]
         },
         {
-          "height": 500,
+          "height": 450,
           "columns": [
             {
-              "id": "scc-t-all",
+              "id": "scc-skills",
               "size": 12
             }
           ]
@@ -41,25 +45,7 @@
           "height": 450,
           "columns": [
             {
-              "id": "scc-p-factory",
-              "size": 12
-            }
-          ]
-        },
-        {
-          "height": 450,
-          "columns": [
-            {
-              "id": "scc-p-status",
-              "size": 12
-            }
-          ]
-        },
-        {
-          "height": 450,
-          "columns": [
-            {
-              "id": "scc-b-owner",
+              "id": "scc-comps",
               "size": 12
             }
           ]
@@ -67,21 +53,68 @@
       ],
       "widgets": [
         {
-          "id": "scc-header",
-          "type": "markdown",
-          "title": "Skills Control Center",
-          "markdown": "## 🎓 Skills Control Center\n\n**15 versioned, SHA-256 locked skills** powering the AI Software Factory Contract.\nEach skill defines the exact procedure, preconditions, deliverables, and authority limits for one factory operation.\n\n| Factory Stage | Color | Skills | Model (1.4.0) | Model (1.5.0) |\n|---|:-:|---|:-:|:-:|\n| ![](https://img.shields.io/badge/Product%20%26%20Requirements-0096FF?style=flat-square) | 🔵 Blue | requirements-analysis · acceptance-criteria · work-decomposition | `opus-5-5` | `opus-5-5` |\n| ![](https://img.shields.io/badge/Software%20Architecture-7B2FBE?style=flat-square) | 🟣 Purple | architecture-options · adr-authoring · openapi-contract | `opus-5-5` | `fable-5-2` ⬆ |\n| ![](https://img.shields.io/badge/Software%20Engineering-00875A?style=flat-square) | 🟢 Green | feature-implementation · test-driven-change · safe-refactor | `opus-5-5` | `fable-5-2` ⬆ |\n| ![](https://img.shields.io/badge/Security%20%26%20Compliance-E84646?style=flat-square) | 🔴 Red | security-review · vulnerability-remediation · compliance-evidence | `opus-5-5` | `opus-5-5` |\n| ![](https://img.shields.io/badge/Platform%20%26%20Operations-D97708?style=flat-square) | 🟠 Orange | release-assessment · incident-triage · remediation-plan | `opus-5-5` | `opus-5-5` |\n\nAll 15 skills: `APPROVED` · `Apache-2.0` · locked in `factory-releases/skills.lock.json`"
+          "id": "scc-board",
+          "type": "board",
+          "title": "Skills — by Factory Stage",
+          "blueprintConfig": {
+            "factorySkill": {
+              "groupSettings": {
+                "groupBy": [
+                  "factory"
+                ]
+              }
+            }
+          },
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factorySkill"
+              }
+            ]
+          },
+          "entitiesQueryMode": "optimized"
         },
         {
-          "id": "scc-registry",
-          "type": "markdown",
-          "title": "Registry Integrity",
-          "markdown": "### Registry Integrity\n\n```\nfactory-releases/\n  skills.lock.json    ← SHA-256 for all 15 SKILL.md files\n  tools.lock.json     ← MCP endpoint identities + approved tool names\n  active.yaml         ← current active FactoryRelease version\n```\n\n| Command | Effect |\n|---|---|\n| `pnpm factory registry:verify` | Verify all 15 SHA-256 digests match locked values — fails CI if mismatch |\n| `pnpm lock-components` | Recompute digests after editing any SKILL.md |\n| `pnpm factory doctor` | Full prerequisite check including registry + Port + DB + sandbox |\n\n**Skill approval lifecycle:** `PENDING → APPROVED → DEPRECATED | REVOKED`\n\nOnly `APPROVED` skills can be referenced in a `FactoryRelease`. A `REVOKED` skill must be replaced before the release can be promoted."
+          "id": "scc-bar",
+          "type": "bar-chart",
+          "title": "Skills — by Stage",
+          "blueprint": "factorySkill",
+          "property": "property#factory",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factorySkill"
+              }
+            ]
+          }
         },
         {
-          "id": "scc-t-all",
+          "id": "scc-bar2",
+          "type": "bar-chart",
+          "title": "Skills — by Status",
+          "blueprint": "factorySkill",
+          "property": "property#status",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factorySkill"
+              }
+            ]
+          }
+        },
+        {
+          "id": "scc-skills",
           "type": "table-entities-explorer",
-          "title": "All Skills",
+          "title": "All 15 Skills — SHA-256 Locked",
           "displayMode": "widget",
           "dataset": {
             "combinator": "and",
@@ -95,59 +128,26 @@
           }
         },
         {
-          "id": "scc-p-factory",
-          "type": "entities-pie-chart",
-          "title": "Skills by Factory Stage",
+          "id": "scc-comps",
+          "type": "table-entities-explorer",
+          "title": "Factory Components",
+          "displayMode": "widget",
           "dataset": {
             "combinator": "and",
             "rules": [
               {
                 "operator": "=",
                 "property": "$blueprint",
-                "value": "factorySkill"
+                "value": "factoryComponent"
               }
             ]
-          },
-          "property": "property#factory"
-        },
-        {
-          "id": "scc-p-status",
-          "type": "entities-pie-chart",
-          "title": "Skills by Status",
-          "dataset": {
-            "combinator": "and",
-            "rules": [
-              {
-                "operator": "=",
-                "property": "$blueprint",
-                "value": "factorySkill"
-              }
-            ]
-          },
-          "property": "property#approvalStatus"
-        },
-        {
-          "id": "scc-b-owner",
-          "type": "bar-chart",
-          "title": "Skills by Owner",
-          "blueprint": "factorySkill",
-          "dataset": {
-            "combinator": "and",
-            "rules": [
-              {
-                "operator": "=",
-                "property": "$blueprint",
-                "value": "factorySkill"
-              }
-            ]
-          },
-          "property": "property#owner"
+          }
         }
       ]
     }
   ],
-  "visibility": "org",
   "sidebar": "catalog",
+  "visibility": "org",
   "protected": false,
   "after": "mySkills"
 }

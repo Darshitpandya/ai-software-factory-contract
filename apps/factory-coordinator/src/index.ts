@@ -289,7 +289,12 @@ async function processOneRun(
       const finalRun = await getRun(pool, runId);
       if (finalRun) {
         const finalMetrics = computeRunMetrics(runId);
-        await port.upsertFactoryRun(finalRun, undefined, finalMetrics);
+        // Build stage model breakdown markdown table
+        const breakdownMd = buildStageModelBreakdownMd(runId);
+        await port.upsertFactoryRun(finalRun, undefined, {
+          ...finalMetrics,
+          stageModelBreakdown: breakdownMd ?? undefined,
+        });
         console.log(`\n✓ Run ${runId} COMPLETED`);
         console.log(`  model: ${finalMetrics.modelUsed}`);
         console.log(`  total tokens: ${finalMetrics.totalTokens.toLocaleString()} (in: ${finalMetrics.totalInputTokens.toLocaleString()}, out: ${finalMetrics.totalOutputTokens.toLocaleString()})`);
@@ -369,6 +374,67 @@ function calculateCost(inputTokens: number, outputTokens: number, model: string)
 
 function sleep(ms: number): Promise<void> {
   return new Promise(r => setTimeout(r, ms));
+}
+
+// ── Build per-stage model breakdown markdown table ────────────────────────────
+const STAGE_ORDER = [
+  "product-requirements", "software-architecture",
+  "software-engineering", "security-compliance", "platform-operations",
+] as const;
+
+const STAGE_LABEL: Record<string, string> = {
+  "product-requirements":  "PRD",
+  "software-architecture": "ARCH",
+  "software-engineering":  "ENG",
+  "security-compliance":   "SEC",
+  "platform-operations":   "OPS",
+};
+
+function buildStageModelBreakdownMd(runId: string, storeDir = "evidence/runs"): string | null {
+  const runDir = path.join(storeDir, runId);
+  if (!existsSync(runDir)) return null;
+
+  const rows: string[] = [];
+  let totalIn = 0, totalOut = 0, totalCost = 0;
+
+  for (const stage of STAGE_ORDER) {
+    const stageDir = path.join(runDir, stage);
+    if (!existsSync(stageDir)) continue;
+
+    // Find latest artifact (by sorted dir name desc)
+    const artDirs = readdirSync(stageDir)
+      .filter(d => d !== "workspace" && existsSync(path.join(stageDir, d, "artifact.json")))
+      .sort()
+      .reverse();
+
+    if (artDirs.length === 0) continue;
+
+    try {
+      const art = JSON.parse(readFileSync(path.join(stageDir, artDirs[0], "artifact.json"), "utf-8")) as {
+        tokenUsage?: { inputTokens?: number; outputTokens?: number };
+        modelUsed?: string;
+      };
+      const artIn = art.tokenUsage?.inputTokens ?? 0;
+      const artOut = art.tokenUsage?.outputTokens ?? 0;
+      const model = art.modelUsed ?? "unknown";
+      const cost = calculateCost(artIn, artOut, model);
+      totalIn += artIn;
+      totalOut += artOut;
+      totalCost += cost;
+      const label = STAGE_LABEL[stage] ?? stage;
+      rows.push(`| ${label} | \`${model}\` | ${artIn.toLocaleString()} | ${artOut.toLocaleString()} | $${cost.toFixed(4)} |`);
+    } catch { /* skip */ }
+  }
+
+  if (rows.length === 0) return null;
+
+  rows.push(`| **Total** | | **${totalIn.toLocaleString()}** | **${totalOut.toLocaleString()}** | **$${totalCost.toFixed(4)}** |`);
+
+  return [
+    "| Stage | Model | Input Tokens | Output Tokens | Cost |",
+    "|-------|-------|-------------|--------------|------|",
+    ...rows,
+  ].join("\n");
 }
 
 // ── Sync Port PENDING entities → DB ─────────────────────────────────────────

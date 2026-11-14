@@ -1,0 +1,228 @@
+{
+  "identifier": "mySkills",
+  "title": "My Factory Skills",
+  "icon": "Flag",
+  "type": "dashboard",
+  "section": "software_catalog",
+  "showInSidebar": true,
+  "widgets": [
+    {
+      "id": "ms-root",
+      "type": "dashboard-widget",
+      "layout": [
+        {
+          "height": 400,
+          "columns": [
+            {
+              "id": "ms-actions",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 500,
+          "columns": [
+            {
+              "id": "ms-board",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 450,
+          "columns": [
+            {
+              "id": "ms-prd",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 450,
+          "columns": [
+            {
+              "id": "ms-arch",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 450,
+          "columns": [
+            {
+              "id": "ms-eng",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 450,
+          "columns": [
+            {
+              "id": "ms-sec",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 450,
+          "columns": [
+            {
+              "id": "ms-ops",
+              "size": 12
+            }
+          ]
+        }
+      ],
+      "widgets": [
+        {
+          "id": "ms-actions",
+          "type": "action-card-widget",
+          "title": "Run Factory with These Skills",
+          "actions": [
+            {
+              "action": "createWorkOrder"
+            },
+            {
+              "action": "triggerFactoryRun"
+            }
+          ]
+        },
+        {
+          "id": "ms-board",
+          "type": "board",
+          "title": "All Skills — by Factory Stage",
+          "blueprintConfig": {
+            "factorySkill": {
+              "groupSettings": {
+                "groupBy": [
+                  "factory"
+                ]
+              }
+            }
+          },
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factorySkill"
+              }
+            ]
+          },
+          "entitiesQueryMode": "optimized"
+        },
+        {
+          "id": "ms-prd",
+          "type": "table-entities-explorer",
+          "title": "📋 Product Requirements Skills",
+          "displayMode": "widget",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factorySkill"
+              },
+              {
+                "operator": "=",
+                "property": "factory",
+                "value": "product-requirements"
+              }
+            ]
+          }
+        },
+        {
+          "id": "ms-arch",
+          "type": "table-entities-explorer",
+          "title": "🏛 Software Architecture Skills",
+          "displayMode": "widget",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factorySkill"
+              },
+              {
+                "operator": "=",
+                "property": "factory",
+                "value": "software-architecture"
+              }
+            ]
+          }
+        },
+        {
+          "id": "ms-eng",
+          "type": "table-entities-explorer",
+          "title": "⚙️ Software Engineering Skills",
+          "displayMode": "widget",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factorySkill"
+              },
+              {
+                "operator": "=",
+                "property": "factory",
+                "value": "software-engineering"
+              }
+            ]
+          }
+        },
+        {
+          "id": "ms-sec",
+          "type": "table-entities-explorer",
+          "title": "🔒 Security & Compliance Skills",
+          "displayMode": "widget",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factorySkill"
+              },
+              {
+                "operator": "=",
+                "property": "factory",
+                "value": "security-compliance"
+              }
+            ]
+          }
+        },
+        {
+          "id": "ms-ops",
+          "type": "table-entities-explorer",
+          "title": "🚀 Platform Operations Skills",
+          "displayMode": "widget",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "factorySkill"
+              },
+              {
+                "operator": "=",
+                "property": "factory",
+                "value": "platform-operations"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "sidebar": "catalog",
+  "visibility": "org",
+  "protected": false,
+  "after": "agentControlCenter"
+}

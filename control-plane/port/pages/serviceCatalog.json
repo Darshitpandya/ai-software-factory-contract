@@ -11,10 +11,10 @@
       "type": "dashboard-widget",
       "layout": [
         {
-          "height": 500,
+          "height": 400,
           "columns": [
             {
-              "id": "sc-header",
+              "id": "sc-actions",
               "size": 12
             }
           ]
@@ -23,7 +23,29 @@
           "height": 500,
           "columns": [
             {
-              "id": "sc-t-all",
+              "id": "sc-board",
+              "size": 12
+            }
+          ]
+        },
+        {
+          "height": 400,
+          "columns": [
+            {
+              "id": "sc-bar",
+              "size": 6
+            },
+            {
+              "id": "sc-bar2",
+              "size": 6
+            }
+          ]
+        },
+        {
+          "height": 450,
+          "columns": [
+            {
+              "id": "sc-services",
               "size": 12
             }
           ]
@@ -32,25 +54,7 @@
           "height": 450,
           "columns": [
             {
-              "id": "sc-p-lang",
-              "size": 12
-            }
-          ]
-        },
-        {
-          "height": 450,
-          "columns": [
-            {
-              "id": "sc-p-tier",
-              "size": 12
-            }
-          ]
-        },
-        {
-          "height": 450,
-          "columns": [
-            {
-              "id": "sc-b-lang",
+              "id": "sc-wos",
               "size": 12
             }
           ]
@@ -58,13 +62,166 @@
       ],
       "widgets": [
         {
-          "id": "sc-header",
-          "type": "markdown",
-          "title": "Service Catalog",
-          "markdown": "## Service Catalog\n\nAll services registered with the AI Software Factory Contract.\n\n**To add a new service:**\n1. Add `.factory/repository-contract.yaml` to your repo\n2. Create a `service` entity in Port (`pnpm factory port:apply`)\n3. Install the Producer GitHub App and configure branch protection with the Verifier App's `factory-contract/acceptance` check\n4. See the [Adopter Guide](https://github.com/Darshitpandya/ai-software-factory-contract#adopter-guide)\n\n| Property | Billing API | Notification API |\n|---|---|---|\n| Language | `TypeScript` | `Python` |\n| Compatibility check | OpenAPI (`oasdiff`) | JSON Schema (event fixtures) |\n| Security constraint | Tenant isolation | PII redaction |\n| Factory Release | `1.4.0` | `1.4.0` |"
+          "id": "sc-actions",
+          "type": "action-card-widget",
+          "title": "Service Actions",
+          "actions": [
+            {
+              "action": "createWorkOrder"
+            },
+            {
+              "action": "triggerFactoryRun"
+            }
+          ]
         },
         {
-          "id": "sc-t-all",
+          "id": "sc-board",
+          "type": "board",
+          "title": "Services — by Language",
+          "blueprintConfig": {
+            "service": {
+              "filterSettings": {
+                "filterBy": {
+                  "combinator": "and",
+                  "rules": []
+                }
+              },
+              "groupSettings": {
+                "groupBy": [
+                  "language"
+                ]
+              },
+              "sortSettings": {
+                "sortBy": []
+              },
+              "propertiesSettings": {
+                "order": [],
+                "shown": [
+                  "$identifier",
+                  "$updatedAt",
+                  "$createdAt",
+                  "$title",
+                  "language",
+                  "repoUrl",
+                  "owner",
+                  "consumedRelease",
+                  "railwayUrl",
+                  "deployment_frequency",
+                  "total_deployments",
+                  "github_failed_workflow_runs_30d",
+                  "github_failed_workflow_runs_7d",
+                  "github_lead_time_for_change",
+                  "github_merged_prs_last_month",
+                  "github_merged_prs_last_week",
+                  "github_open_prs",
+                  "github_pr_cycle_time",
+                  "github_pr_cycle_time_weekly",
+                  "github_stale_prs_7d",
+                  "github_workflow_runs_30d",
+                  "github_workflow_runs_7d",
+                  "production_readiness",
+                  "delivery_performance",
+                  "factoryContractCoverage",
+                  "reliability_health",
+                  "dora_lead_time",
+                  "dora_deploy_freq",
+                  "github_private_visibility",
+                  "github_has_language",
+                  "github_has_pr_template",
+                  "github_has_gitignore",
+                  "github_has_codeowners",
+                  "github_active_repo_30d",
+                  "github_has_team",
+                  "github_has_readme",
+                  "github_active_repo_7d",
+                  "github_has_criticality",
+                  "github_has_url",
+                  "github_has_merged_prs",
+                  "github_minimal_stale_prs",
+                  "github_excellent_open_pr_management",
+                  "github_cycle_time_under_7d",
+                  "github_good_open_pr_management",
+                  "github_throughput_not_degrading",
+                  "github_excellent_throughput",
+                  "github_manageable_open_prs",
+                  "github_cycle_time_not_degrading",
+                  "github_low_stale_prs",
+                  "github_cycle_time_under_24h",
+                  "github_good_throughput",
+                  "github_cycle_time_under_1h",
+                  "github_no_stale_prs",
+                  "hasOwner",
+                  "hasRepoUrl",
+                  "github_has_workflow_runs",
+                  "github_failure_rate_under_30",
+                  "github_failure_rate_under_15",
+                  "github_failure_rate_under_5",
+                  "github_failure_rate_not_degrading",
+                  "github_svc_lt_medium",
+                  "github_svc_lt_elite",
+                  "github_svc_lt_high",
+                  "github_svc_df_elite",
+                  "github_svc_df_high",
+                  "github_svc_df_medium",
+                  "scorecardsStats",
+                  "github_repository"
+                ]
+              }
+            }
+          },
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "service"
+              }
+            ]
+          },
+          "entitiesQueryMode": "optimized",
+          "showEmptyValues": true,
+          "createdBy": "user_TuYiIpMbcfjAouHC",
+          "updatedBy": "user_TuYiIpMbcfjAouHC",
+          "createdAt": "2026-11-14T18:23:20.133Z",
+          "updatedAt": "2026-11-14T18:23:20.133Z"
+        },
+        {
+          "id": "sc-bar",
+          "type": "bar-chart",
+          "title": "Services — Language Distribution",
+          "blueprint": "service",
+          "property": "property#language",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "service"
+              }
+            ]
+          }
+        },
+        {
+          "id": "sc-bar2",
+          "type": "bar-chart",
+          "title": "Work Orders — by Status",
+          "blueprint": "workOrder",
+          "property": "property#status",
+          "dataset": {
+            "combinator": "and",
+            "rules": [
+              {
+                "operator": "=",
+                "property": "$blueprint",
+                "value": "workOrder"
+              }
+            ]
+          }
+        },
+        {
+          "id": "sc-services",
           "type": "table-entities-explorer",
           "title": "All Services",
           "displayMode": "widget",
@@ -80,59 +237,26 @@
           }
         },
         {
-          "id": "sc-p-lang",
-          "type": "entities-pie-chart",
-          "title": "Services by Language",
+          "id": "sc-wos",
+          "type": "table-entities-explorer",
+          "title": "Work Orders",
+          "displayMode": "widget",
           "dataset": {
             "combinator": "and",
             "rules": [
               {
                 "operator": "=",
                 "property": "$blueprint",
-                "value": "service"
+                "value": "workOrder"
               }
             ]
-          },
-          "property": "property#language"
-        },
-        {
-          "id": "sc-p-tier",
-          "type": "entities-pie-chart",
-          "title": "Services by Tier",
-          "dataset": {
-            "combinator": "and",
-            "rules": [
-              {
-                "operator": "=",
-                "property": "$blueprint",
-                "value": "service"
-              }
-            ]
-          },
-          "property": "property#tier"
-        },
-        {
-          "id": "sc-b-lang",
-          "type": "bar-chart",
-          "title": "Language Distribution",
-          "blueprint": "service",
-          "dataset": {
-            "combinator": "and",
-            "rules": [
-              {
-                "operator": "=",
-                "property": "$blueprint",
-                "value": "service"
-              }
-            ]
-          },
-          "property": "property#language"
+          }
         }
       ]
     }
   ],
-  "visibility": "org",
   "sidebar": "catalog",
+  "visibility": "org",
   "protected": false,
-  "after": "factoryReleaseDashboard"
+  "after": "githubOverview"
 }
