@@ -86,12 +86,13 @@ export class PortClient {
     blueprint: string,
     query: Record<string, unknown>
   ): Promise<PortEntity[]> {
+    // GET all factoryRun entities and filter PENDING client-side
+    // Port /entities/search has strict format — simpler to GET all and filter
     const result = await this.request<{ entities: PortEntity[] }>(
-      "POST",
-      `/blueprints/${blueprint}/entities/search`,
-      query
+      "GET",
+      `/blueprints/${blueprint}/entities`
     );
-    return result.entities;
+    return result.entities ?? [];
   }
 
   // ── Action run reporting ─────────────────────────────────────────────────

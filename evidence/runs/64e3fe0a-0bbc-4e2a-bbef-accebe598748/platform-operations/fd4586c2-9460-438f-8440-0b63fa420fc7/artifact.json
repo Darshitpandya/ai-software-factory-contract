@@ -1,0 +1,28 @@
+{
+  "id": "fd4586c2-9460-438f-8440-0b63fa420fc7",
+  "runId": "64e3fe0a-0bbc-4e2a-bbef-accebe598748",
+  "stage": "platform-operations",
+  "producedAt": "2026-11-14T10:42:42.070Z",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "53660a2854f87029727b00e25cbed71e20f4062bc318290a8191d2126fd729d1",
+      "sizeBytes": 356,
+      "mimeType": "text/markdown"
+    },
+    {
+      "path": "work-order.json",
+      "sha256": "132b8ded8169d4bae8c41bd3b70c67ccf92ac065829a5bb122de72cbc5cd4e09",
+      "sizeBytes": 438,
+      "mimeType": "application/json"
+    }
+  ],
+  "sha256": "131aa8bbd006fef6327c70879523dad01dbcc0ea6d574ec240167dd7681f41c7",
+  "producerStatus": "PRODUCED",
+  "modelUsed": "claude-haiku-5-5",
+  "factoryRelease": "1.4.0",
+  "tokenUsage": {
+    "inputTokens": 9014,
+    "outputTokens": 1127
+  }
+}

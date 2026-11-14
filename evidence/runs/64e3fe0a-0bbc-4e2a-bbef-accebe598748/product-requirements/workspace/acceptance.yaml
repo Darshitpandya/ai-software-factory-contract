@@ -1,0 +1,120 @@
+schemaVersion: "1"
+workOrder: wo-notification-schema-001
+runId: 64e3fe0a-0bbc-4e2a-bbef-accebe598748
+stage: product-requirements
+status: PRODUCED   # proposal only; not ACCEPTED
+specRevision: product-spec.md (this run; no repo SHA provided)
+verifierNote: >
+  Concrete verifier commands for the contract format are unresolved (OD-008).
+  Verifier IDs below are logical names, not confirmed commands. The fixed
+  validator `verify-requirements.ts` checks this file's structure and traceability.
+humanDecisions:
+  - id: OD-001
+    summary: targetService is empty in the WorkOrder; Port service and owner cannot be verified.
+    blocking: true
+  - id: OD-002
+    summary: Designated service/product owner for approval is unresolved.
+    blocking: true
+  - id: OD-003
+    summary: Payload fields of account.reactivated are undefined.
+  - id: OD-004
+    summary: Tenant/account identifier field of the existing contract is unconfirmed.
+  - id: OD-005
+    summary: Authorization model sufficiency is unconfirmed.
+  - id: OD-006
+    summary: Existing unknown-event and validation-failure behavior is unconfirmed.
+  - id: OD-007
+    summary: Existing payload size limits are unconfirmed.
+  - id: OD-008
+    summary: Contract format and repo location are unconfirmed.
+criteria:
+  - id: AC-001
+    requirementId: REQ-001
+    name: Event type defined
+    success: The contract lists an event type named exactly "account.reactivated".
+    failure: The type is absent, misspelled, or differently cased.
+    verifier: contract-schema-check   # logical; blocked on OD-008
+    expectedArtifact: updated notification contract file
+    humanDecision: false
+  - id: AC-002
+    requirementId: REQ-002
+    name: Change is additive only
+    success: A contract diff against the previous version shows only additions; no removed or altered existing event types, fields, required-ness, types, or enum values.
+    failure: Diff shows any removal, rename, type change, or newly required field on an existing event.
+    verifier: contract-diff-compat-check   # logical; blocked on OD-008
+    expectedArtifact: contract diff report
+    humanDecision: false
+  - id: AC-003
+    requirementId: REQ-003
+    name: Backward compatibility (API compatibility)
+    success: A corpus of events valid under the previous contract version all validate under the new version.
+    failure: Any previously valid event fails validation under the new version.
+    verifier: backward-compat-fixture-validation   # logical; blocked on OD-008
+    expectedArtifact: compatibility test report
+    humanDecision: false
+  - id: AC-004
+    requirementId: REQ-004
+    name: Payload schema machine-validatable
+    success: A sample event with valid payload validates against the account.reactivated schema; the schema itself is a valid schema document.
+    failure: The schema is missing, is itself invalid, or a valid sample is rejected.
+    verifier: contract-schema-check   # logical
+    expectedArtifact: schema file and sample-event fixtures
+    humanDecision: true   # payload fields are pending (OD-003)
+  - id: AC-005
+    requirementId: REQ-004
+    name: Invalid payload rejected
+    success: Sample events missing a required field or with a wrong type are rejected by validation.
+    failure: An invalid sample event is accepted.
+    verifier: contract-schema-check   # logical
+    expectedArtifact: negative fixtures and test report
+    humanDecision: true   # depends on OD-003
+  - id: AC-006
+    requirementId: REQ-005
+    name: Tenant isolation identifier present
+    success: The account.reactivated schema requires the same tenant/account identifier as other account events; an event without it is rejected.
+    failure: The event can validate without tenant identification.
+    verifier: contract-schema-check   # logical
+    expectedArtifact: schema and negative fixture
+    humanDecision: true   # field name pending (OD-004)
+  - id: AC-007
+    requirementId: REQ-006
+    name: Authorization model unchanged
+    success: No new permission, scope, or role is introduced in the change set; the reviewer confirms the existing model applies.
+    failure: The change set introduces a new authorization element, or the confirmation is missing.
+    verifier: change-set-review   # human/protected review
+    expectedArtifact: review record by authorized human
+    humanDecision: true   # OD-005
+  - id: AC-008
+    requirementId: REQ-007
+    name: Error-path behavior consistent
+    success: Invalid account.reactivated events produce the same validation-failure behavior as other event types; unknown-type handling for older consumers is documented and tested as unchanged.
+    failure: A new failure mode is introduced, or old-consumer behavior differs from other unknown types.
+    verifier: backward-compat-fixture-validation   # logical
+    expectedArtifact: test report
+    humanDecision: true   # OD-006
+  - id: AC-009
+    requirementId: REQ-008
+    name: Version and changelog recorded
+    success: The contract version is 1.4.0 and the changelog lists account.reactivated as a non-breaking addition.
+    failure: The version is not bumped, or the changelog is missing or labels the change breaking.
+    verifier: release-metadata-check   # logical
+    expectedArtifact: changelog entry and version field
+    humanDecision: false
+  - id: AC-010
+    requirementId: NFC-4
+    name: CSV formatting and export bounds not applicable
+    success: The change set contains no CSV export or bulk-export behavior.
+    failure: The change set adds CSV or export behavior without matching requirements.
+    verifier: change-set-review   # human/protected review
+    expectedArtifact: review record
+    humanDecision: false
+traceability:
+  REQ-001: [AC-001]
+  REQ-002: [AC-002]
+  REQ-003: [AC-003]
+  REQ-004: [AC-004, AC-005]
+  REQ-005: [AC-006]
+  REQ-006: [AC-007]
+  REQ-007: [AC-008]
+  REQ-008: [AC-009]
+  NFC-4: [AC-010]

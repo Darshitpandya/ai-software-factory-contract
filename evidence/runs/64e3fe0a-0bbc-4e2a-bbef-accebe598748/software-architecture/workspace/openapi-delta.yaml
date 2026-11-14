@@ -1,0 +1,110 @@
+# OpenAPI DELTA — PROPOSAL ONLY (status: PRODUCED / DRAFT, not ACCEPTED)
+# Work order: wo-notification-schema-001 | Run: 64e3fe0a-0bbc-4e2a-bbef-accebe598748
+#
+# WARNING: Written WITHOUT the baseline notification contract or the protected base SHA.
+# Component names (NotificationEvent, NotificationEventType, the envelope fields) are ASSUMPTIONS
+# (see architecture.md section 3). Rename them to match the real baseline before merging.
+# Not validated: oasdiff validate/breaking was not run, and verify-architecture.ts could not run
+# (ERR_PNPM_RECURSIVE_EXEC_NO_PACKAGE).
+#
+# Delta semantics: this file lists ONLY additions. It removes or changes no existing paths,
+# operations, parameters, responses or schema properties.
+openapi: 3.1.0
+info:
+  title: Notification Event Contract — account.reactivated delta
+  version: 1.4.0-proposal
+  x-work-order: wo-notification-schema-001
+  x-delta-status: PRODUCED
+  x-baseline-ref: UNRESOLVED   # protected base SHA not available
+paths: {}   # no path changes
+components:
+  schemas:
+    # ADDITION: new value appended to the existing event-type enum (assumed name).
+    # oasdiff may report this as an enum-value-added warning on payloads/responses.
+    # It is non-breaking only if consumers are contractually tolerant readers (owner decision).
+    NotificationEventType:
+      x-delta-op: append-enum-values
+      type: string
+      enum:
+        - account.reactivated
+
+    # ADDITION: new discriminator mapping / oneOf branch on the existing envelope (assumed name).
+    NotificationEvent:
+      x-delta-op: add-oneOf-branch
+      oneOf:
+        - $ref: '#/components/schemas/AccountReactivatedEvent'
+      discriminator:
+        propertyName: eventType
+        mapping:
+          account.reactivated: '#/components/schemas/AccountReactivatedEvent'
+
+    # ADDITION: new event schema
+    AccountReactivatedEvent:
+      type: object
+      description: >
+        Emitted once, after the transaction commits, when an account moves from suspended or
+        deactivated back to active. Tenant-scoped. The producer sets tenantId from authenticated
+        context.
+      required: [eventId, eventType, occurredAt, tenantId, schemaVersion, data]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique per emission. Consumers deduplicate on this value.
+        eventType:
+          type: string
+          const: account.reactivated
+        occurredAt:
+          type: string
+          format: date-time
+        tenantId:
+          type: string
+          description: Set by the producer from authenticated context. Never taken from caller input.
+        schemaVersion:
+          type: string
+          example: "1"
+        data:
+          $ref: '#/components/schemas/AccountReactivatedData'
+      additionalProperties: true
+
+    AccountReactivatedData:
+      type: object
+      required: [accountId, reactivatedAt, previousStatus]
+      properties:
+        accountId:
+          type: string
+        reactivatedAt:
+          type: string
+          format: date-time
+        previousStatus:
+          type: string
+          enum: [suspended, deactivated]
+        reason:
+          type: string
+          maxLength: 512
+          description: Optional operational reason. Must not contain PII.
+        actor:
+          type: object
+          required: [type]
+          properties:
+            type:
+              type: string
+              enum: [user, system, support]
+            id:
+              type: string
+              description: Opaque actor identifier (not an email or name).
+      additionalProperties: true
+  examples:
+    AccountReactivatedExample:
+      summary: Illustrative payload (synthetic values)
+      value:
+        eventId: 00000000-0000-4000-8000-000000000000
+        eventType: account.reactivated
+        occurredAt: "2025-01-01T00:00:00Z"
+        tenantId: tenant-example
+        schemaVersion: "1"
+        data:
+          accountId: acct-example
+          reactivatedAt: "2025-01-01T00:00:00Z"
+          previousStatus: suspended
+          actor: { type: support, id: actor-example }

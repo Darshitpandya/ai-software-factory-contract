@@ -55,11 +55,15 @@ async function main(): Promise<void> {
   }
   console.log(`✓ Port connected (org: ${portPing.org})`);
   console.log(`✓ Coordinator ready. Polling every ${POLL_INTERVAL_MS / 1000}s...`);
+  console.log(`  → Watching Port for PENDING runs and PostgreSQL for queued runs`);
 
   // Main poll loop
   // eslint-disable-next-line no-constant-condition
   while (true) {
     try {
+      // Sync any PENDING Port entities that have no DB record yet
+      // This handles runs created via GitHub Actions self-service action
+      await syncPendingFromPort(pool, port);
       await processOneRun(pool, port, executor, sandbox, store);
     } catch (e) {
       console.error("Coordinator loop error:", e);
@@ -97,11 +101,21 @@ async function processOneRun(
     const run = await getRun(pool, runId);
     if (!run) return;
 
-    // Idempotency: skip already-accepted stages
+    // Idempotency: skip already-accepted stages and advance current_stage in DB
     if (await isStageAlreadyAccepted(pool, runId, stage)) {
-      console.log(`  ↳ Stage ${stage} already ACCEPTED — advancing`);
+      console.log(`  ↳ Stage ${stage} already ACCEPTED — advancing to next`);
       const next = nextStage(stage);
-      if (!next) await markRunCompleted(pool, runId, "idempotent");
+      if (!next) {
+        await markRunCompleted(pool, runId, "idempotent");
+        const updRun = await getRun(pool, runId);
+        if (updRun) await port.upsertFactoryRun(updRun);
+      } else {
+        // Advance current_stage so next poll processes the right stage
+        await pool.query(
+          "UPDATE factory_runs SET current_stage=$1, updated_at=NOW() WHERE id=$2",
+          [next, runId]
+        );
+      }
       return;
     }
 
@@ -270,6 +284,58 @@ async function processOneRun(
 
 function sleep(ms: number): Promise<void> {
   return new Promise(r => setTimeout(r, ms));
+}
+
+// ── Sync Port PENDING entities → DB ─────────────────────────────────────────
+// When a self-service action creates a factoryRun entity in Port (via GitHub Actions),
+// the coordinator picks it up here and creates the matching DB record so it can process.
+
+async function syncPendingFromPort(
+  pool: Pool,
+  port: ReturnType<typeof createPortClientFromEnv>
+): Promise<void> {
+  try {
+    // GET all factoryRun entities and filter PENDING client-side
+    // (Port /entities/search has different format requirements — simpler to filter here)
+    const allRuns = await port.searchEntities("factoryRun", {});
+
+    const pendingRuns = allRuns.filter(
+      (e) => (e.properties["status"] as string) === "PENDING"
+    );
+
+    for (const portRun of pendingRuns) {
+      const runId = portRun.identifier;
+      const existing = await pool.query(
+        "SELECT id FROM factory_runs WHERE id = $1",
+        [runId]
+      );
+      if (existing.rows.length > 0) continue;
+
+      // Extract work order and release from Port entity relations/properties
+      const workOrderId =
+        (portRun.relations?.["workOrder"] as string) ??
+        (portRun.properties?.["workOrder"] as string) ??
+        runId;
+      const releaseRaw =
+        (portRun.relations?.["factoryRelease"] as string) ??
+        (portRun.properties?.["factoryRelease"] as string) ??
+        "1.4.0";
+      const factoryRelease = releaseRaw.replace("factory-release-", "");
+
+      await pool.query(
+        `INSERT INTO factory_runs
+           (id, work_order_id, factory_release, status, current_stage,
+            created_at, updated_at, metadata)
+         VALUES ($1,$2,$3,'PENDING','product-requirements',NOW(),NOW(),$4)
+         ON CONFLICT (id) DO NOTHING`,
+        [runId, workOrderId, factoryRelease, JSON.stringify({})]
+      );
+      console.log(`\n✓ Synced Port PENDING run → DB: ${runId}`);
+      console.log(`  workOrder=${workOrderId}  release=${factoryRelease}`);
+    }
+  } catch (e) {
+    console.warn(`  ⚠ Port sync warning: ${e}`);
+  }
 }
 
 main().catch(e => {

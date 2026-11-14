@@ -1,0 +1,103 @@
+{
+  "workOrder": "wo-notification-schema-001",
+  "runId": "64e3fe0a-0bbc-4e2a-bbef-accebe598748",
+  "stage": "product-requirements",
+  "status": "PRODUCED",
+  "note": "Proposal only. Architecture and target service are not approved/resolved; no architecture choice is assumed.",
+  "blockingQuestions": [
+    { "id": "OD-001", "question": "targetService is empty. Which Port service owns the notification contract?", "owner": "notifications-domain / Port catalog owner", "blocks": ["WI-001"] },
+    { "id": "OD-002", "question": "Who is the designated owner/approver for this change?", "owner": "Port", "blocks": ["WI-001"] },
+    { "id": "OD-003", "question": "Payload fields for account.reactivated?", "owner": "notifications-domain", "blocks": ["WI-003"] },
+    { "id": "OD-004", "question": "Existing tenant/account identifier field?", "owner": "notifications-domain", "blocks": ["WI-003", "WI-005"] },
+    { "id": "OD-005", "question": "Is the existing authorization model unchanged?", "owner": "notifications-domain / security", "blocks": ["WI-007"] },
+    { "id": "OD-006", "question": "Existing unknown-event and validation-failure behavior?", "owner": "notifications-domain", "blocks": ["WI-006"] },
+    { "id": "OD-007", "question": "Existing payload size limits?", "owner": "notifications-domain", "blocks": ["WI-003"] },
+    { "id": "OD-008", "question": "Contract format and repository location?", "owner": "notifications-domain", "blocks": ["WI-002", "WI-003"] }
+  ],
+  "workItems": [
+    {
+      "id": "WI-001",
+      "title": "Resolve target service and owner in Port",
+      "description": "Populate/confirm targetService, resolve owner, and pin the Port context snapshot digest.",
+      "requirementIds": ["REQ-001"],
+      "acceptanceIds": [],
+      "dependsOn": [],
+      "blockedBy": ["OD-001", "OD-002"],
+      "ownerDomain": "notifications-domain (to be confirmed via Port)"
+    },
+    {
+      "id": "WI-002",
+      "title": "Identify contract format, location and compatibility tooling",
+      "description": "Locate the notification contract and select the deterministic compatibility verifier.",
+      "requirementIds": ["REQ-002", "REQ-003"],
+      "acceptanceIds": ["AC-002", "AC-003"],
+      "dependsOn": ["WI-001"],
+      "blockedBy": ["OD-008"],
+      "ownerDomain": "notifications-domain (to be confirmed)"
+    },
+    {
+      "id": "WI-003",
+      "title": "Define account.reactivated event type and payload schema",
+      "description": "Add the event type and machine-validatable payload schema, additive only.",
+      "requirementIds": ["REQ-001", "REQ-004"],
+      "acceptanceIds": ["AC-001", "AC-004", "AC-005"],
+      "dependsOn": ["WI-002"],
+      "blockedBy": ["OD-003", "OD-004", "OD-007", "OD-008"],
+      "ownerDomain": "notifications-domain (to be confirmed)"
+    },
+    {
+      "id": "WI-004",
+      "title": "Verify additive-only change and backward compatibility",
+      "description": "Run contract diff and previous-version fixture validation against the new version.",
+      "requirementIds": ["REQ-002", "REQ-003"],
+      "acceptanceIds": ["AC-002", "AC-003"],
+      "dependsOn": ["WI-003"],
+      "blockedBy": [],
+      "ownerDomain": "notifications-domain (to be confirmed)"
+    },
+    {
+      "id": "WI-005",
+      "title": "Enforce tenant identification in schema and add negative fixture",
+      "description": "Require the existing tenant/account identifier on the new event; add a fixture lacking it.",
+      "requirementIds": ["REQ-005"],
+      "acceptanceIds": ["AC-006"],
+      "dependsOn": ["WI-003"],
+      "blockedBy": ["OD-004"],
+      "ownerDomain": "notifications-domain (to be confirmed)"
+    },
+    {
+      "id": "WI-006",
+      "title": "Validate error-path and unknown-type behavior",
+      "description": "Test validation failure and older-consumer unknown-type handling for the new event.",
+      "requirementIds": ["REQ-007"],
+      "acceptanceIds": ["AC-008"],
+      "dependsOn": ["WI-003"],
+      "blockedBy": ["OD-006"],
+      "ownerDomain": "notifications-domain (to be confirmed)"
+    },
+    {
+      "id": "WI-007",
+      "title": "Confirm authorization model unchanged (human review)",
+      "description": "Authorized reviewer confirms no new permission model; also confirms no CSV/export behavior was added.",
+      "requirementIds": ["REQ-006", "NFC-4"],
+      "acceptanceIds": ["AC-007", "AC-010"],
+      "dependsOn": ["WI-003"],
+      "blockedBy": ["OD-005"],
+      "ownerDomain": "notifications-domain / security (to be confirmed)"
+    },
+    {
+      "id": "WI-008",
+      "title": "Record version 1.4.0 and changelog entry",
+      "description": "Bump contract version and record account.reactivated as a non-breaking addition.",
+      "requirementIds": ["REQ-008"],
+      "acceptanceIds": ["AC-009"],
+      "dependsOn": ["WI-004", "WI-005", "WI-006", "WI-007"],
+      "blockedBy": [],
+      "ownerDomain": "notifications-domain (to be confirmed)"
+    }
+  ],
+  "exclusions": [
+    { "item": "Changes to existing event types", "reason": "Out of scope per product-spec.md section 6" },
+    { "item": "Consumer-side templates/channels and producer trigger logic", "reason": "Out of scope per product-spec.md section 6" }
+  ]
+}

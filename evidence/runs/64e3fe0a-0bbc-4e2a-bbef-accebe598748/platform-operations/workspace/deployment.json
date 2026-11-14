@@ -1,0 +1,98 @@
+{
+  "schemaVersion": "1.0",
+  "stage": "platform-operations",
+  "runId": "64e3fe0a-0bbc-4e2a-bbef-accebe598748",
+  "workOrderId": "wo-notification-schema-001",
+  "workOrderTitle": "Notification Event Schema — Add account.reactivated",
+  "releaseVersion": "1.4.0",
+  "factoryRelease": "1.4.0",
+  "status": "PRODUCED",
+  "acceptanceStatus": "NOT_ACCEPTED",
+  "acceptanceNote": "Produced for review only. Acceptance is set by the independent verifier and an authorized designated human.",
+  "documentType": "operational-documentation",
+  "liveDeploymentPerformed": false,
+  "scope": {
+    "change": "Add account.reactivated event type to the notification event contract",
+    "changeClass": "non-breaking additive schema change",
+    "deploymentKind": "contract/schema publication; no new long-running service introduced by this work order"
+  },
+  "targetService": {
+    "name": null,
+    "status": "UNRESOLVED",
+    "reason": "work-order.json targetService is an empty string. The target must be supplied by notifications-domain before any deployment plan can be executed."
+  },
+  "artifactProvenance": {
+    "sourceRepositoryBaseSha": "UNRESOLVED",
+    "inputArtifactSha256": "UNRESOLVED",
+    "factoryReleaseDigest": "UNRESOLVED",
+    "note": "Not supplied in the workspace context. Not fabricated."
+  },
+  "containerSpec": {
+    "image": {
+      "repository": "UNRESOLVED",
+      "digest": "UNRESOLVED",
+      "tagPolicy": "Deploy by immutable digest only; mutable tags are not permitted."
+    },
+    "runtime": "UNRESOLVED",
+    "ports": [],
+    "resources": {
+      "cpuRequest": "UNRESOLVED",
+      "cpuLimit": "UNRESOLVED",
+      "memoryRequest": "UNRESOLVED",
+      "memoryLimit": "UNRESOLVED"
+    },
+    "env": {
+      "secretsPolicy": "Secrets are referenced by name from the trusted secret store. No secret values are recorded in this document."
+    },
+    "healthProbes": {
+      "liveness": "UNRESOLVED",
+      "readiness": "UNRESOLVED"
+    }
+  },
+  "contractChange": {
+    "eventType": "account.reactivated",
+    "compatibility": "backward-compatible addition; existing event types and consumers are not modified",
+    "consumerRollout": "Consumers must ignore unknown event types or be upgraded before producers emit account.reactivated.",
+    "versioning": "Schema version bump per notification contract versioning policy; exact version to be confirmed by notifications-domain."
+  },
+  "rolloutStrategy": {
+    "type": "staged",
+    "steps": [
+      "1. Confirm targetService and immutable image digest with notifications-domain.",
+      "2. Confirm the accepted source revision and FactoryRelease 1.4.0 digest.",
+      "3. Deploy to test environment through the trusted deployment workflow only.",
+      "4. Run health evidence checks defined in health-evidence.json.",
+      "5. Hold for designated human approval before any promotion beyond test."
+    ],
+    "maxUnavailable": "UNRESOLVED",
+    "maxSurge": "UNRESOLVED",
+    "deploymentWindow": "UNRESOLVED"
+  },
+  "rollbackStrategy": {
+    "trigger": "Any failing smoke check in health-evidence.json, or an approved SLO breach during the observation window.",
+    "knownGoodTarget": {
+      "digest": "UNRESOLVED",
+      "revision": "UNRESOLVED",
+      "status": "UNRESOLVED"
+    },
+    "method": "Redeploy the exact known-good immutable digest through the trusted deployment workflow.",
+    "rollbackEligibility": "Blocked until a known-good digest is supplied and verified.",
+    "owner": "UNRESOLVED",
+    "approvalRequired": "Designated human approval per deployment policy."
+  },
+  "ownership": {
+    "requestedBy": "notifications-domain",
+    "platformOperationsOwner": "UNRESOLVED (resolve from Port; not invented)",
+    "oncallContact": "UNRESOLVED"
+  },
+  "unresolvedBlockers": [
+    "targetService is empty in work-order.json",
+    "No immutable image digest or repository base SHA supplied",
+    "No known-good rollback digest identified",
+    "No approved SLO or smoke thresholds supplied",
+    "Platform-operations owner not resolved from Port",
+    "No deployment window or approval record supplied"
+  ],
+  "requirementIds": [],
+  "evidenceUri": "UNRESOLVED"
+}

@@ -272,7 +272,7 @@ export class ClaudeExecutor {
     for (let turn = 0; turn < maxTurns; turn++) {
       const response = await this.client.messages.create({
         model,
-        max_tokens: 8192,
+        max_tokens: 16000,
         system: systemPrompt,
         tools,
         messages,
@@ -412,9 +412,23 @@ function buildStagePrompt(
   };
   const required = outputFiles[stage] ?? ["output.md"];
 
+  const stageNotes: Partial<Record<FactoryStage, string>> = {
+    "platform-operations": `IMPORTANT: You are producing OPERATIONAL DOCUMENTATION, not running a live deployment.
+- deployment.json: JSON document describing the deployment configuration, container spec, rollback strategy
+- health-evidence.json: JSON document with smoke test definitions and expected results
+- runbook.md: Markdown operational runbook with startup, shutdown, rollback procedures
+Write realistic, substantive documentation based on the work order. Do NOT attempt to run docker or deployment commands.`,
+    "software-engineering": `IMPORTANT: Produce implementation documentation, not actual code changes.
+- implementation-notes.md: Technical implementation guidance for developers
+- pr-description.md: PR description with scope, breaking change assessment, test coverage notes`,
+  };
+
+  const note = stageNotes[stage] ? `\n\n${stageNotes[stage]}` : "";
+
   return `Execute the ${stage} factory stage for work order ${workOrderId}.
 
 Work order: ${JSON.stringify(context.workOrder ?? {}, null, 2)}
+${note}
 
 REQUIRED OUTPUT FILES (you MUST write ALL of these before reporting):
 ${required.map(f => `  - ${f}`).join("\n")}

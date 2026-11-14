@@ -1,0 +1,84 @@
+{
+  "schemaVersion": "1.0",
+  "stage": "platform-operations",
+  "runId": "64e3fe0a-0bbc-4e2a-bbef-accebe598748",
+  "workOrderId": "wo-notification-schema-001",
+  "status": "PRODUCED",
+  "acceptanceStatus": "NOT_ACCEPTED",
+  "observationStatus": "NO_LIVE_OBSERVATIONS",
+  "documentType": "smoke-test-definitions-and-expected-results",
+  "note": "This file defines checks and expected results only. No health observation has been made. No result below is a measured value.",
+  "target": {
+    "service": null,
+    "environment": "test",
+    "status": "UNRESOLVED",
+    "reason": "targetService is empty in work-order.json"
+  },
+  "checks": [
+    {
+      "id": "HC-001",
+      "name": "Service readiness",
+      "type": "http-or-grpc-readiness",
+      "description": "Target service reports ready after rollout.",
+      "expected": "Readiness endpoint returns success within the rollout timeout.",
+      "threshold": "UNRESOLVED (no approved threshold supplied)",
+      "observed": null
+    },
+    {
+      "id": "HC-002",
+      "name": "Contract schema contains account.reactivated",
+      "type": "contract-check",
+      "description": "Published notification event schema includes the account.reactivated event type.",
+      "expected": "Schema validation passes and the event type is present with the agreed payload shape.",
+      "threshold": "Exact pass",
+      "observed": null
+    },
+    {
+      "id": "HC-003",
+      "name": "Backward compatibility",
+      "type": "contract-check",
+      "description": "Existing event types validate unchanged against the previous schema version.",
+      "expected": "Zero breaking changes detected by the compatibility checker.",
+      "threshold": "Zero breaking changes",
+      "observed": null
+    },
+    {
+      "id": "HC-004",
+      "name": "Sample event publish and consume",
+      "type": "synthetic-event",
+      "description": "Publish one synthetic account.reactivated event to the test topic and confirm consumption by a test consumer.",
+      "expected": "Event is delivered and parses against the new schema.",
+      "threshold": "Delivered and parsed, no DLQ entries",
+      "observed": null
+    },
+    {
+      "id": "HC-005",
+      "name": "Error rate",
+      "type": "metric",
+      "description": "Error rate on the notification pipeline during the observation window.",
+      "expected": "Within the approved baseline.",
+      "threshold": "UNRESOLVED (no approved SLO supplied)",
+      "observed": null
+    },
+    {
+      "id": "HC-006",
+      "name": "Consumer error logs",
+      "type": "log-scan",
+      "description": "Scan consumer logs for schema validation or unknown-event errors caused by the new event type.",
+      "expected": "No new schema-validation errors attributable to account.reactivated.",
+      "threshold": "Zero new errors",
+      "observed": null
+    }
+  ],
+  "observationWindow": "UNRESOLVED",
+  "rollbackTriggers": [
+    "HC-001 fails after the rollout timeout",
+    "HC-003 reports any breaking change",
+    "HC-004 fails or produces DLQ entries",
+    "HC-006 shows new schema-validation errors",
+    "HC-005 breaches the approved SLO"
+  ],
+  "postActionHealthRequirement": "After any rollback or remediation, all checks must be rerun and freshly observed before the incident is considered resolved.",
+  "evidenceUri": "UNRESOLVED",
+  "requirementIds": []
+}

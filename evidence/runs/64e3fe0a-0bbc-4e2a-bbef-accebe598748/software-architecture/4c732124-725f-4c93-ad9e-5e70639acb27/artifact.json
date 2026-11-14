@@ -1,0 +1,46 @@
+{
+  "id": "4c732124-725f-4c93-ad9e-5e70639acb27",
+  "runId": "64e3fe0a-0bbc-4e2a-bbef-accebe598748",
+  "stage": "software-architecture",
+  "producedAt": "2026-11-14T10:40:42.910Z",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "969176cd521a818db2629af989e74f6c7419e8ba51ca131a0680b9537defc01b",
+      "sizeBytes": 358,
+      "mimeType": "text/markdown"
+    },
+    {
+      "path": "adr.md",
+      "sha256": "fbb769180e5fed57980d862c686dda287466d8d49be8e720f677f949bae4c948",
+      "sizeBytes": 3986,
+      "mimeType": "text/markdown"
+    },
+    {
+      "path": "architecture.md",
+      "sha256": "7abc1501ba9bc7a0229d169e25d9b417026072a1598e725b0903b8d8f2e96aea",
+      "sizeBytes": 7137,
+      "mimeType": "text/markdown"
+    },
+    {
+      "path": "openapi-delta.yaml",
+      "sha256": "00c0954473c1985ffd91bc1ab172a74bc9f5c5726181cc1162ba18b726732ff7",
+      "sizeBytes": 4110,
+      "mimeType": "application/yaml"
+    },
+    {
+      "path": "work-order.json",
+      "sha256": "6382a1b96879ebef63fa73827db14ef27fd10797ed5ba15d654f768d0448ed92",
+      "sizeBytes": 440,
+      "mimeType": "application/json"
+    }
+  ],
+  "sha256": "f39b1550fe0bdf446178374d82ed72084da8d7b9b551bab1b70f610d2c22bca7",
+  "producerStatus": "PRODUCED",
+  "modelUsed": "claude-opus-5-5",
+  "factoryRelease": "1.4.0",
+  "tokenUsage": {
+    "inputTokens": 26340,
+    "outputTokens": 7282
+  }
+}
