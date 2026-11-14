@@ -156,7 +156,11 @@ async function processOneRun(
     const runAtStart = await getRun(pool, runId);
     if (runAtStart) {
       const metrics = computeRunMetrics(runId);
-      await port.upsertFactoryRun(runAtStart, undefined, metrics.totalTokens > 0 ? metrics : undefined);
+      const runTitle = `${workOrderContext.title as string} · ${run.factoryRelease}`;
+      await port.upsertFactoryRun(runAtStart, undefined, {
+        ...(metrics.totalTokens > 0 ? metrics : {}),
+        runTitle,
+      });
     }
 
     // Seed workspace with context files so Claude can read them
@@ -218,7 +222,11 @@ async function processOneRun(
       const runFailed = await getRun(pool, runId);
       if (runFailed) {
         const metrics = computeRunMetrics(runId);
-        await port.upsertFactoryRun(runFailed, undefined, metrics.totalTokens > 0 ? metrics : undefined);
+        const runTitle = `${workOrderContext.title as string} · ${run.factoryRelease}`;
+        await port.upsertFactoryRun(runFailed, undefined, {
+          ...(metrics.totalTokens > 0 ? metrics : {}),
+          runTitle,
+        });
       }
       console.log(`  ✗ Stage ${stage} failed: ${errMsg}`);
       return;
@@ -271,7 +279,8 @@ async function processOneRun(
       const runAfterAccept = await getRun(pool, runId);
       if (runAfterAccept) {
         const metrics = computeRunMetrics(runId);
-        await port.upsertFactoryRun(runAfterAccept, undefined, metrics);
+        const runTitle = `${workOrderContext.title as string} · ${run.factoryRelease}`;
+        await port.upsertFactoryRun(runAfterAccept, undefined, { ...metrics, runTitle });
         if (metrics.totalTokens > 0) {
           console.log(`  → tokens so far: ${metrics.totalTokens.toLocaleString()} | ~$${metrics.estimatedCostUsd.toFixed(4)}`);
         }
@@ -291,9 +300,11 @@ async function processOneRun(
         const finalMetrics = computeRunMetrics(runId);
         // Build stage model breakdown markdown table
         const breakdownMd = buildStageModelBreakdownMd(runId);
+        const runTitle = `${workOrderContext.title as string} · ${run.factoryRelease}`;
         await port.upsertFactoryRun(finalRun, undefined, {
           ...finalMetrics,
           stageModelBreakdown: breakdownMd ?? undefined,
+          runTitle,
         });
         console.log(`\n✓ Run ${runId} COMPLETED`);
         console.log(`  model: ${finalMetrics.modelUsed}`);

@@ -126,12 +126,14 @@ export class PortClient {
       modelUsed?: string;
       estimatedCostUsd?: number;
       stageModelBreakdown?: string;
+      runTitle?: string; // Override default "Run {id} — {status}" title
     }
   ): Promise<void> {
+    const defaultTitle = `Run ${run.id.slice(0, 8)} — ${run.status}`;
     const entity: PortEntity = {
       identifier: run.id,
       blueprint: "factoryRun",
-      title: `Run ${run.id.slice(0, 8)} — ${run.status}`,
+      title: metrics?.runTitle ?? defaultTitle,
       properties: {
         runId: run.id,
         status: run.status,
