@@ -347,7 +347,31 @@ None of these values belong in a committed file. Use `.env` locally (in `.gitign
 
 ---
 
-## Factory Release Lifecycle
+## Factory Release Model Assignments
+
+**Release 1.4.0 (ACTIVE)** — `defaultModel: claude-opus-5-5`
+
+| Stage | Model | Why |
+|---|---|---|
+| `product-requirements` | `claude-opus-5-5` | Requirements analysis |
+| `software-architecture` | `claude-opus-5-5` | ADRs + OpenAPI reasoning |
+| `software-engineering` | `claude-opus-5-5` | Code generation + tests |
+| `security-compliance` | `claude-opus-5-5` | Policy matching |
+| `platform-operations` | `claude-opus-5-5` | Health checks + deployment |
+
+**Release 1.5.0 (CANDIDATE)** — Option B: only two stage overrides in `stageModels`:
+```yaml
+stageModels:
+  software-architecture: claude-fable-5-2   # adaptive thinking for ADR quality
+  software-engineering: claude-fable-5-2    # agentic coding for fewer rework cycles
+# all other stages fall back to defaultModel: claude-opus-5-5
+```
+
+See [docs/models.md](docs/models.md) for the full model selection guide.
+
+---
+
+## Live Demo Evidence
 
 Factory releases are the unit of change for the production system itself.
 
