@@ -1,0 +1,69 @@
+{
+  "workOrderId": "wo-notification-schema-001",
+  "runId": "92b970ee-c073-4d80-9053-40937cbbdb98",
+  "stage": "platform-operations",
+  "factoryRelease": "1.4.0",
+  "releaseVersion": "1.4.0",
+  "status": "BLOCKED",
+  "statusNote": "PRODUCED-BLOCKED. Not ACCEPTED. No deployment was performed.",
+  "scope": "Add account.reactivated event type to notification contract (non-breaking addition).",
+  "targetService": null,
+  "deployment": {
+    "performed": false,
+    "environment": null,
+    "deploymentWindow": null,
+    "rolloutStrategy": null,
+    "imageDigest": null,
+    "knownGoodImageDigest": null,
+    "sourceCommitSha": null,
+    "repositoryBaseSha": null,
+    "inputArtifactSha256": null,
+    "factoryReleaseDigest": null
+  },
+  "preconditionsChecked": [
+    {
+      "id": "PC-1",
+      "check": "targetService declared in work order",
+      "result": "FAIL",
+      "evidence": "work-order.json targetService is an empty string"
+    },
+    {
+      "id": "PC-2",
+      "check": "accepted upstream artifact SHA-256 and repository base SHA available",
+      "result": "FAIL",
+      "evidence": "No accepted upstream artifact digest or base SHA was supplied in workspace inputs"
+    },
+    {
+      "id": "PC-3",
+      "check": "known-good rollback target (digest) identified",
+      "result": "FAIL",
+      "evidence": "No known-good image digest or rollback target supplied"
+    },
+    {
+      "id": "PC-4",
+      "check": "deployment approval by authorized designated owner",
+      "result": "FAIL",
+      "evidence": "No deployment approval present; approvals must not be fabricated"
+    },
+    {
+      "id": "PC-5",
+      "check": "deterministic validator pass (verify-deployment.ts)",
+      "result": "FAIL",
+      "exitCode": "nonzero",
+      "toolVersion": "pnpm exec tsx (version not captured)",
+      "evidence": "ERR_PNPM_RECURSIVE_EXEC_NO_PACKAGE: No package found in this workspace"
+    }
+  ],
+  "escalation": {
+    "required": true,
+    "reasons": [
+      "No target service or deployment target declared",
+      "No accepted release digest or repository base SHA",
+      "No known-good rollback target",
+      "No deployment approval",
+      "Validator could not execute in the workspace"
+    ],
+    "owner": "platform-operations domain owner (resolve from Port; not invented here)"
+  },
+  "notes": "This is a non-breaking event-schema addition. Deployment of a contract change to a test service requires a declared target and approved release before this stage can produce a deployment plan."
+}

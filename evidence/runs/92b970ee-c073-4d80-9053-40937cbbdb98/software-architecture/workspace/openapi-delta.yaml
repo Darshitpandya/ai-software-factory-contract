@@ -1,0 +1,135 @@
+# OpenAPI DELTA — PROPOSAL, UNVERIFIED
+# Work order: wo-notification-schema-001 | Run: 92b970ee-c073-4d80-9053-40937cbbdb98
+# Status: PRODUCED (draft). NOT accepted. NOT validated.
+#
+# PROVENANCE WARNING:
+#   - Baseline notification contract at protected base SHA was NOT available in the workspace.
+#   - Base SHA: UNKNOWN. Baseline digest: UNKNOWN.
+#   - oasdiff validate/breaking: NOT RUN (no baseline; sandbox has no package manifest).
+#   - verify-architecture.ts: NOT RUN (exit nonzero, ERR_PNPM_RECURSIVE_EXEC_NO_PACKAGE).
+#   This file shows only ADDITIVE elements. It assumes the envelope/component names
+#   listed below. They MUST be reconciled with the real baseline before merge.
+#
+# Assumed baseline names (ASSUMPTION — check these):
+#   components.schemas.NotificationEvent      (envelope with discriminator on `type`)
+#   components.schemas.NotificationEventType  (string enum of event types)
+#
+# Compatibility rules for this delta:
+#   - No existing path, operation, parameter, response or schema is modified or removed.
+#   - No new required field is added to any existing schema.
+#   - Only change to an existing element: append one enum value and one discriminator
+#     mapping entry. Owner must rule on this if the baseline enum is closed (see architecture.md §6).
+
+openapi: 3.1.0
+info:
+  title: Notification Contract — account.reactivated delta
+  version: 1.4.0
+  x-delta-of: "UNKNOWN — baseline at protected base SHA not supplied"
+  x-work-order: wo-notification-schema-001
+  x-status: PRODUCED-UNVERIFIED
+
+webhooks:
+  account.reactivated:
+    post:
+      operationId: onAccountReactivated
+      summary: Delivered when a previously deactivated/suspended account is reactivated.
+      description: |
+        Additive webhook. Delivered only to subscriptions that belong to the event's tenant
+        and have opted into `account.reactivated`. At-least-once delivery: consumers
+        must deduplicate by `id`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountReactivatedEvent'
+            examples:
+              reactivated:
+                $ref: '#/components/examples/AccountReactivatedExample'
+      responses:
+        '2XX':
+          description: Event accepted by subscriber.
+        '4XX':
+          description: Subscriber rejected the event. It won't be retried (except 408/429).
+        '5XX':
+          description: Subscriber error. Retried per the existing delivery policy.
+
+components:
+  schemas:
+    # --- Additive change to existing enum (ASSUMED name) ---
+    NotificationEventType:
+      x-delta-operation: append-enum-value
+      x-delta-note: Append only. Existing values are preserved unchanged.
+      type: string
+      enum:
+        - account.reactivated
+
+    # --- New schemas ---
+    AccountReactivatedEvent:
+      type: object
+      description: Envelope for the account.reactivated event (mirrors the assumed NotificationEvent envelope).
+      required: [id, type, occurred_at, tenant_id, data]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique event ID. Idempotency key for consumers.
+        type:
+          type: string
+          const: account.reactivated
+        occurred_at:
+          type: string
+          format: date-time
+        tenant_id:
+          type: string
+          description: Owning tenant. Delivery is restricted to this tenant's subscriptions.
+        data:
+          $ref: '#/components/schemas/AccountReactivatedData'
+      additionalProperties: true
+
+    AccountReactivatedData:
+      type: object
+      required: [account_id, reactivated_at]
+      properties:
+        account_id:
+          type: string
+          description: Identifier of the reactivated account. No PII.
+        reactivated_at:
+          type: string
+          format: date-time
+        previous_status:
+          type: string
+          description: Status before reactivation (e.g. deactivated, suspended). Open string so future values aren't breaking.
+        reason_code:
+          type: string
+          description: Optional machine-readable reason. Open string.
+        actor_type:
+          type: string
+          enum: [user, admin, system]
+          description: Category of the actor that triggered reactivation (no actor identity, to avoid PII).
+      additionalProperties: true
+
+  examples:
+    AccountReactivatedExample:
+      value:
+        id: 3f6c1d2e-8a4b-4c9e-9f10-2b7d5e6a1c00
+        type: account.reactivated
+        occurred_at: '2025-01-15T10:00:00Z'
+        tenant_id: tenant_example
+        data:
+          account_id: acct_example
+          reactivated_at: '2025-01-15T10:00:00Z'
+          previous_status: suspended
+          reason_code: payment_resolved
+          actor_type: system
+
+# Discriminator mapping addition (applies to the ASSUMED NotificationEvent.oneOf):
+#   NotificationEvent.discriminator.mapping:
+#     account.reactivated: '#/components/schemas/AccountReactivatedEvent'
+#   NotificationEvent.oneOf: append { $ref: '#/components/schemas/AccountReactivatedEvent' }
+# These edits can't be written as a valid patch until the real baseline is available.
+#
+# Fixtures still required (openapi-contract step 3), NOT produced in this run:
+#   - valid account.reactivated delivery
+#   - delivery to a subscription of a different tenant (must not occur)
+#   - payload missing required data.account_id (must fail validation)

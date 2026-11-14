@@ -1,0 +1,83 @@
+{
+  "workOrder": "wo-notification-schema-001",
+  "runId": "92b970ee-c073-4d80-9053-40937cbbdb98",
+  "status": "PRODUCED",
+  "note": "Proposal only. Architecture and target service are not approved or resolved (BLK-001).",
+  "blockingQuestions": [
+    { "id": "DEC-001", "question": "What is the target service and its Port owner?", "owner": "notifications-domain / Port service owner (to be resolved)" },
+    { "id": "DEC-002", "question": "What is the account.reactivated payload?", "owner": "notifications-domain" },
+    { "id": "DEC-003", "question": "What triggers the event and is emission in scope?", "owner": "notifications-domain with account domain owner (unresolved)" },
+    { "id": "DEC-004", "question": "Confirm tenant isolation and the tenant identifier field.", "owner": "notifications-domain, security reviewer" },
+    { "id": "DEC-005", "question": "How should unknown event types be handled by consumers?", "owner": "notifications-domain" },
+    { "id": "DEC-006", "question": "Who are the existing consumers?", "owner": "notifications-domain" },
+    { "id": "DEC-007", "question": "What is the current contract version, and what is the minor bump?", "owner": "notifications-domain" }
+  ],
+  "workItems": [
+    {
+      "id": "WI-001",
+      "title": "Resolve target service and owner from Port; pin context snapshot and base SHA",
+      "requirements": ["REQ-001", "REQ-006"],
+      "acceptanceCriteria": ["AC-008"],
+      "dependsOn": [],
+      "blockedBy": ["DEC-001"],
+      "owner": "unresolved"
+    },
+    {
+      "id": "WI-002",
+      "title": "Decide payload, tenant scoping field, unknown-type handling and version bump",
+      "requirements": ["REQ-003", "REQ-004", "REQ-005", "REQ-006"],
+      "acceptanceCriteria": ["AC-004", "AC-005", "AC-006", "AC-007"],
+      "dependsOn": ["WI-001"],
+      "blockedBy": ["DEC-002", "DEC-004", "DEC-005", "DEC-007"],
+      "owner": "notifications-domain"
+    },
+    {
+      "id": "WI-003",
+      "title": "Add account.reactivated event type and schema to the notification contract",
+      "requirements": ["REQ-001", "REQ-003"],
+      "acceptanceCriteria": ["AC-001", "AC-004"],
+      "dependsOn": ["WI-002"],
+      "blockedBy": [],
+      "owner": "unresolved"
+    },
+    {
+      "id": "WI-004",
+      "title": "Add backward-compatibility checks: previous-message corpus and additive-only schema diff",
+      "requirements": ["REQ-002"],
+      "acceptanceCriteria": ["AC-002", "AC-003"],
+      "dependsOn": ["WI-001"],
+      "blockedBy": ["DEC-006"],
+      "owner": "unresolved"
+    },
+    {
+      "id": "WI-005",
+      "title": "Add tenant-isolation negative-fixture tests",
+      "requirements": ["REQ-004"],
+      "acceptanceCriteria": ["AC-005"],
+      "dependsOn": ["WI-003"],
+      "blockedBy": [],
+      "owner": "unresolved"
+    },
+    {
+      "id": "WI-006",
+      "title": "Document unknown-event handling and add changelog/version metadata for release 1.4.0",
+      "requirements": ["REQ-005", "REQ-006"],
+      "acceptanceCriteria": ["AC-006", "AC-007"],
+      "dependsOn": ["WI-003", "WI-004"],
+      "blockedBy": [],
+      "owner": "unresolved"
+    }
+  ],
+  "exclusions": [
+    { "item": "Producer emission of account.reactivated", "reason": "Out of scope pending DEC-003" },
+    { "item": "Consumer delivery/template behavior", "reason": "Out of scope per product-spec section 6" }
+  ],
+  "traceability": {
+    "REQ-001": ["WI-001", "WI-003"],
+    "REQ-002": ["WI-004"],
+    "REQ-003": ["WI-002", "WI-003"],
+    "REQ-004": ["WI-002", "WI-005"],
+    "REQ-005": ["WI-002", "WI-006"],
+    "REQ-006": ["WI-001", "WI-002", "WI-006"]
+  }
+}

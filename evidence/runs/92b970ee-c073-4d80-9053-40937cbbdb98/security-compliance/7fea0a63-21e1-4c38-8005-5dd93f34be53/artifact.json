@@ -1,0 +1,40 @@
+{
+  "id": "7fea0a63-21e1-4c38-8005-5dd93f34be53",
+  "runId": "92b970ee-c073-4d80-9053-40937cbbdb98",
+  "stage": "security-compliance",
+  "producedAt": "2026-11-14T08:49:45.966Z",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "245c21dcba93a9e025f0e33cf6473493ec94e5b0f83e483ce9f42bdad7a7a3ec",
+      "sizeBytes": 356,
+      "mimeType": "text/markdown"
+    },
+    {
+      "path": "compliance-checklist.md",
+      "sha256": "7e1ebf61faeaa3edd9908834ce0654e643864d42dad01927bd2d78baeb293175",
+      "sizeBytes": 2484,
+      "mimeType": "text/markdown"
+    },
+    {
+      "path": "security-review.md",
+      "sha256": "be80e0564f2840768d6e75e6212b1b4feddf3984ac378533a093224b3425efd1",
+      "sizeBytes": 3811,
+      "mimeType": "text/markdown"
+    },
+    {
+      "path": "work-order.json",
+      "sha256": "a0578d6d3fc4566c3a927d94cd0636295e83a264ce5fe6ed8d3ff9c19f218a11",
+      "sizeBytes": 438,
+      "mimeType": "application/json"
+    }
+  ],
+  "sha256": "26e8217b0d550f35781bc4e376b1572e8ad0c96f1f1125e06c9f757ff4360ffa",
+  "producerStatus": "PRODUCED",
+  "modelUsed": "claude-sonnet-5-5",
+  "factoryRelease": "1.4.0",
+  "tokenUsage": {
+    "inputTokens": 21467,
+    "outputTokens": 3230
+  }
+}

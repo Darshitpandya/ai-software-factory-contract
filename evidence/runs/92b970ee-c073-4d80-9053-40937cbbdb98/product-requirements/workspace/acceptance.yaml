@@ -1,0 +1,102 @@
+# Acceptance criteria — PROPOSAL (status: PRODUCED, not ACCEPTED)
+# Source: product-spec.md for wo-notification-schema-001, run 92b970ee-c073-4d80-9053-40937cbbdb98
+# No test results are claimed. Verifier names marked "TBD" do not exist yet and must be
+# defined by the designated owner once BLK-001 is resolved.
+workOrder: wo-notification-schema-001
+runId: 92b970ee-c073-4d80-9053-40937cbbdb98
+specRevision: product-spec.md (unpinned; no input SHA-256 provided)
+status: PRODUCED
+blockers:
+  - id: BLK-001
+    description: WorkOrder targetService is empty; service and owner cannot be verified against Port.
+    state: WAITING_FOR_HUMAN
+criteria:
+  - id: AC-001
+    requirement: REQ-001
+    name: account.reactivated defined in contract
+    success: The notification contract schema lists an event type named exactly "account.reactivated".
+    failure: The event type is absent, misspelled, or differently cased.
+    verifier: TBD-contract-schema-validation
+    verifierExists: false
+    expectedArtifact: Updated notification contract schema file (path depends on BLK-001)
+    humanDecision: false
+  - id: AC-002
+    requirement: REQ-002
+    name: Previous-contract messages remain valid
+    success: A corpus of messages valid under the previous contract version validates against the new contract with zero failures.
+    failure: Any previously valid message fails validation.
+    verifier: TBD-contract-compat-check
+    verifierExists: false
+    expectedArtifact: Compatibility check report
+    humanDecision: false
+  - id: AC-003
+    requirement: REQ-002
+    name: No existing definition modified
+    success: A schema diff shows only additions. No removed or changed fields, enum values or required lists for existing event types.
+    failure: The diff contains any removal or modification of an existing definition.
+    verifier: TBD-schema-diff-check
+    verifierExists: false
+    expectedArtifact: Schema diff report
+    humanDecision: false
+  - id: AC-004
+    requirement: REQ-003
+    name: Payload schema fully defined
+    success: The account.reactivated schema declares every payload field with type and required-ness, as approved by the human decision DEC-002.
+    failure: Undefined, untyped, or unapproved fields.
+    verifier: TBD-contract-schema-validation
+    verifierExists: false
+    expectedArtifact: Schema definition and approved payload decision record
+    humanDecision: true
+    decisionRef: DEC-002
+  - id: AC-005
+    requirement: REQ-004
+    name: Tenant isolation
+    success: The schema requires the tenant/account scoping field confirmed under DEC-004, and a message without it is rejected.
+    failure: A message without tenant scoping validates successfully.
+    verifier: TBD-tenant-isolation-test
+    verifierExists: false
+    expectedArtifact: Negative-fixture test report
+    humanDecision: true
+    decisionRef: DEC-004
+  - id: AC-006
+    requirement: REQ-005
+    name: Unknown event type handling documented
+    success: The contract documentation states how consumers treat unknown event types, per decision DEC-005, and existing consumers behave unchanged.
+    failure: No documented handling, or an existing consumer behavior changes.
+    verifier: TBD-consumer-compat-test
+    verifierExists: false
+    expectedArtifact: Documentation section and consumer test report
+    humanDecision: true
+    decisionRef: DEC-005
+  - id: AC-007
+    requirement: REQ-006
+    name: Release and version metadata
+    success: The changelog has an entry for account.reactivated under release 1.4.0 and the contract version bump is additive (minor), as confirmed under DEC-007.
+    failure: Missing changelog entry, or the version bump indicates a breaking change.
+    verifier: TBD-release-metadata-check
+    verifierExists: false
+    expectedArtifact: Changelog entry and version metadata
+    humanDecision: true
+    decisionRef: DEC-007
+  - id: AC-008
+    requirement: [REQ-001, REQ-002, REQ-003, REQ-004, REQ-005, REQ-006]
+    name: Requirements traceability
+    success: Every requirement maps to at least one criterion and one work item, with no dangling references.
+    failure: An unmapped requirement, or a reference to a nonexistent verifier or ID.
+    verifier: pnpm exec tsx factories/product-requirements/scripts/verify-requirements.ts
+    verifierExists: unverified
+    expectedArtifact: verifier exit code and output
+    humanDecision: false
+counterexamples:
+  - id: CX-001
+    criterion: AC-002
+    description: A previously valid message type becomes invalid after the change. Must fail.
+  - id: CX-002
+    criterion: AC-005
+    description: An account.reactivated message without tenant scoping passes validation. Must fail.
+  - id: CX-003
+    criterion: AC-001
+    description: The event is named "account.reactivate" or "Account.Reactivated". Must fail.
+notApplicable:
+  - topic: CSV formatting and export bounds
+    reason: Not part of the WorkOrder scope; no requirement exists.

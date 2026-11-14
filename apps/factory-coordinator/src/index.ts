@@ -138,7 +138,9 @@ async function processOneRun(
     });
 
     await transitionStageStatus(pool, runId, stage, "RUNNING");
-    await port.upsertFactoryRun(run);
+    // Push live status to Port immediately — stage starts
+    const runAtStart = await getRun(pool, runId);
+    if (runAtStart) await port.upsertFactoryRun(runAtStart);
 
     // Seed workspace with context files so Claude can read them
     const { writeFileSync, mkdirSync } = await import("fs");
@@ -195,6 +197,9 @@ async function processOneRun(
       const errMsg = result.error ?? (result.producedFiles.length === 0 ? "Stage produced no output files — Claude did not call report_stage_output" : "Stage execution failed");
       await transitionStageStatus(pool, runId, stage, "REJECTED", { error: errMsg });
       await markRunFailed(pool, runId, stage, errMsg);
+      // Push failed state to Port
+      const runFailed = await getRun(pool, runId);
+      if (runFailed) await port.upsertFactoryRun(runFailed);
       console.log(`  ✗ Stage ${stage} failed: ${errMsg}`);
       return;
     }
@@ -242,6 +247,9 @@ async function processOneRun(
       // For other stages: internal acceptance check
       await transitionStageStatus(pool, runId, stage, "ACCEPTED", { artifactRef: artifact.sha256 });
       console.log(`  ✓ Stage ${stage} ACCEPTED (internal check)`);
+      // Push accepted stage to Port immediately
+      const runAfterAccept = await getRun(pool, runId);
+      if (runAfterAccept) await port.upsertFactoryRun(runAfterAccept);
     }
 
     // Check if all stages complete

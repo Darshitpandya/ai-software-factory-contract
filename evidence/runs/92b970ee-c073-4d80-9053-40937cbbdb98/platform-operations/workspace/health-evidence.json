@@ -1,0 +1,29 @@
+{
+  "workOrderId": "wo-notification-schema-001",
+  "runId": "92b970ee-c073-4d80-9053-40937cbbdb98",
+  "stage": "platform-operations",
+  "status": "NO_EVIDENCE",
+  "statusNote": "No health observations exist because no deployment was performed. No health data has been fabricated.",
+  "targetService": null,
+  "environment": null,
+  "observations": [],
+  "healthChecks": {
+    "smoke": { "result": "NOT_RUN", "reason": "No deployed target" },
+    "readiness": { "result": "NOT_RUN", "reason": "No deployed target" },
+    "errorRate": { "result": "NOT_RUN", "reason": "No telemetry source authorized or supplied" },
+    "latencyP95": { "result": "NOT_RUN", "reason": "No telemetry source authorized or supplied" },
+    "sloThresholds": { "result": "NOT_AVAILABLE", "reason": "No SLO values supplied; values must not be fabricated" }
+  },
+  "telemetry": {
+    "sources": [],
+    "queryWindow": null,
+    "evidenceUri": null
+  },
+  "validator": {
+    "command": "pnpm exec tsx factories/platform-operations/scripts/verify-deployment.ts",
+    "exitCode": "nonzero",
+    "output": "ERR_PNPM_RECURSIVE_EXEC_NO_PACKAGE: No package found in this workspace",
+    "evidenceUri": null
+  },
+  "conclusion": "Health evidence is absent. Health cannot be claimed as passing. Rollback eligibility cannot be assessed without a deployed target and a known-good digest."
+}

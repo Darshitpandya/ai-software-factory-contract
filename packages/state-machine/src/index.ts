@@ -174,7 +174,8 @@ export async function transitionStageStatus(
     [
       JSON.stringify(stages),
       runStatus,
-      runStatus === "COMPLETED" ? null : newStatus === "RUNNING" ? stage : (nextStage(stage) ?? stage),
+      // Keep last stage name when COMPLETED so board shows the final column, not N/A
+      runStatus === "COMPLETED" ? stage : newStatus === "RUNNING" ? stage : (nextStage(stage) ?? stage),
       runId,
     ]
   );

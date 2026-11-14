@@ -1,0 +1,40 @@
+{
+  "id": "29023469-ecb9-48d6-bee7-978b39e9e27b",
+  "runId": "92b970ee-c073-4d80-9053-40937cbbdb98",
+  "stage": "software-engineering",
+  "producedAt": "2026-11-14T08:49:04.170Z",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "488f628e9fa83bef9abab2fa03aaa559182918356357ad180718258cd00f4c9d",
+      "sizeBytes": 357,
+      "mimeType": "text/markdown"
+    },
+    {
+      "path": "implementation-notes.md",
+      "sha256": "86e4e1d5a635253e0f68bcb6f191342f71ecd626e2c9611811fce45e10c3e357",
+      "sizeBytes": 4856,
+      "mimeType": "text/markdown"
+    },
+    {
+      "path": "pr-description.md",
+      "sha256": "306aac14a2f57566674449d08e3c73aac0ea431de5fd228892847a621eb971b5",
+      "sizeBytes": 2695,
+      "mimeType": "text/markdown"
+    },
+    {
+      "path": "work-order.json",
+      "sha256": "9aafb045152056e969e6bd89511dbc1b82f321b206178852913c115bbd44a734",
+      "sizeBytes": 439,
+      "mimeType": "application/json"
+    }
+  ],
+  "sha256": "d34794d3b93030769324d800c0b9c84c49f621166baa9b2030792d89c3540c68",
+  "producerStatus": "PRODUCED",
+  "modelUsed": "claude-opus-5-5",
+  "factoryRelease": "1.4.0",
+  "tokenUsage": {
+    "inputTokens": 22573,
+    "outputTokens": 3937
+  }
+}
