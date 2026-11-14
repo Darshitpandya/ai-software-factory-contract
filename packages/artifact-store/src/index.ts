@@ -81,6 +81,14 @@ export class ArtifactStore {
     baseRepoSha?: string;
     sandboxId?: string;
   }): StageArtifact {
+    // Debug: show what's in workspace before collecting
+    try {
+      const topLevel = readdirSync(opts.workspaceDir);
+      console.log(`    [ArtifactStore] workspaceDir=${opts.workspaceDir} files=${JSON.stringify(topLevel)}`);
+    } catch (e) {
+      console.log(`    [ArtifactStore] ERROR reading workspaceDir: ${e}`);
+    }
+
     const files = this.collectFiles(opts.workspaceDir);
     const bundleHash = this.bundleSha256(files);
 

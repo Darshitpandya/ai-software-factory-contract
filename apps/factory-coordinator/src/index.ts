@@ -166,11 +166,22 @@ async function processOneRun(
       allowedTools: ["read_file", "write_file", "run_command", "list_directory", "report_stage_output"],
     });
 
-    // Build artifact
+    // Copy produced files from workspace into evidence dir before building artifact
+    const evidenceDir = path.join("evidence/runs", runId, stage, "workspace");
+    const { mkdirSync: mkd, cpSync } = await import("fs");
+    try {
+      mkd(evidenceDir, { recursive: true });
+      cpSync(session.workspaceDir, evidenceDir, { recursive: true });
+      console.log(`  ✓ Workspace copied to evidence: ${evidenceDir}`);
+    } catch (e) {
+      console.warn(`  ⚠ Could not copy workspace to evidence: ${e}`);
+    }
+
+    // Build artifact (read from persisted evidence dir)
     const artifact = store.buildArtifact({
       runId,
       stage,
-      workspaceDir: session.workspaceDir,
+      workspaceDir: evidenceDir,
       modelUsed: result.modelUsed,
       factoryRelease: run.factoryRelease,
       tokenUsage: result.tokenUsage,
