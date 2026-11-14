@@ -1,9 +1,0 @@
-port_client_id     = "voRuoqRFDbplwRVrem8TCy18rtR2cuKt"
-port_client_secret = "MmSkooqpVzpTSxnEC0TsCTe4KtqWQPjUXVIq2PGNUAy5RnhJgYR1nxTiI3Pl0TQX"
-port_base_url      = "https://api.getport.io"
-
-github_token = "REPLACE_WITH_GITHUB_TOKEN"
-github_owner = "Darshitpandya"
-
-billing_repo_name      = "factory-reference-billing-api"
-notification_repo_name = "factory-reference-notification-api"
