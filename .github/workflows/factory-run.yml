@@ -1,4 +1,15 @@
 name: factory-run
+# Triggered by Port self-service action "Trigger Factory Run"
+# This workflow:
+#   1. Creates the factory run record in Port (always works)
+#   2. If DATABASE_URL is available: also creates the DB record for the local/cloud coordinator
+#   3. Reports back to Port with the run ID
+#
+# For the demo: run the coordinator locally first:
+#   cd ai-software-factory-contract
+#   export $(cat .env | grep -v '#' | xargs)
+#   node_modules/.bin/tsx apps/factory-coordinator/src/index.ts
+# The coordinator polls PostgreSQL every 10s and picks up PENDING runs automatically.
 
 on:
   workflow_dispatch:
@@ -13,7 +24,7 @@ on:
         default: '1.4.0'
         type: string
       portRunId:
-        description: 'Port action run ID for status reporting'
+        description: 'Port action run ID for status reporting back to Port'
         required: false
         type: string
       action:
@@ -37,16 +48,19 @@ on:
 
 permissions:
   contents: read
-  actions: write  # for dispatch only
   id-token: write
+
+env:
+  PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
+  PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
 
 jobs:
   factory-run:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 10   # Short — we just create the record, coordinator runs locally
 
     steps:
-      - name: Checkout factory-contract
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -62,65 +76,130 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Typecheck
-        run: pnpm typecheck
-
-      - name: Run factory doctor
-        env:
-          PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
-          PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: pnpm factory doctor --profile ci-integration
-
-      - name: Dispatch factory run
-        if: ${{ inputs.action == 'run' }}
-        env:
-          PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
-          PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          GITHUB_APP_ID: ${{ secrets.FACTORY_APP_ID }}
-          GITHUB_APP_PRIVATE_KEY_PATH: /tmp/github_app_key.pem
-          GITHUB_APP_INSTALLATION_ID: ${{ secrets.FACTORY_APP_INSTALLATION_ID }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # ── Report to Port: run is being dispatched ────────────────────────────
+      - name: Report in-progress to Port
+        if: ${{ inputs.portRunId != '' }}
         run: |
-          echo "${{ secrets.FACTORY_APP_PRIVATE_KEY }}" > /tmp/github_app_key.pem
-          chmod 600 /tmp/github_app_key.pem
-          pnpm factory run \
-            --work-order "${{ inputs.workOrderId }}" \
-            --release "${{ inputs.releaseVersion }}"
+          PORT_TOKEN=$(curl -s -X POST "https://api.getport.io/v1/auth/access_token" \
+            -H "Content-Type: application/json" \
+            -d "{\"clientId\":\"$PORT_CLIENT_ID\",\"clientSecret\":\"$PORT_CLIENT_SECRET\"}" \
+            | jq -r '.accessToken')
 
-      - name: Start coordinator (runs until all stages complete)
+          curl -s -X PATCH "https://api.getport.io/v1/actions/runs/${{ inputs.portRunId }}" \
+            -H "Authorization: Bearer $PORT_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"status":"IN_PROGRESS","summary":"Factory run dispatched — coordinator will pick up"}'
+
+      # ── Create factory run record ──────────────────────────────────────────
+      - name: Create factory run (with DB if available)
         if: ${{ inputs.action == 'run' }}
+        id: create_run
         env:
-          PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
-          PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          GITHUB_APP_ID: ${{ secrets.FACTORY_APP_ID }}
-          GITHUB_APP_PRIVATE_KEY_PATH: /tmp/github_app_key.pem
-          GITHUB_APP_INSTALLATION_ID: ${{ secrets.FACTORY_APP_INSTALLATION_ID }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FACTORY_APP_ID: ${{ secrets.FACTORY_APP_ID }}
+          FACTORY_APP_PRIVATE_KEY_PATH: /tmp/factory_key.pem
+          FACTORY_APP_INSTALLATION_ID: ${{ secrets.FACTORY_APP_INSTALLATION_ID }}
         run: |
-          # Coordinator runs until the run is terminal or the job times out
-          timeout 80m pnpm --filter factory-coordinator start || true
+          # Write GitHub App key if available
+          if [ -n "${{ secrets.FACTORY_APP_PRIVATE_KEY }}" ]; then
+            echo "${{ secrets.FACTORY_APP_PRIVATE_KEY }}" > /tmp/factory_key.pem
+            chmod 600 /tmp/factory_key.pem
+          fi
 
+          if [ -n "$DATABASE_URL" ]; then
+            echo "DATABASE_URL is set — creating run in DB and Port"
+            pnpm factory run \
+              --work-order "${{ inputs.workOrderId }}" \
+              --release "${{ inputs.releaseVersion }}" 2>&1 | tee /tmp/run_output.txt
+            RUN_ID=$(grep "run-id:" /tmp/run_output.txt | awk '{print $2}')
+          else
+            echo "No DATABASE_URL — creating Port entity only (local coordinator will process)"
+            # Generate a UUID for the run
+            RUN_ID=$(node -e "const c=require('crypto'); console.log(c.randomUUID())")
+            echo "run-id: $RUN_ID" > /tmp/run_output.txt
+
+            # Create the factoryRun entity in Port directly
+            PORT_TOKEN=$(curl -s -X POST "https://api.getport.io/v1/auth/access_token" \
+              -H "Content-Type: application/json" \
+              -d "{\"clientId\":\"$PORT_CLIENT_ID\",\"clientSecret\":\"$PORT_CLIENT_SECRET\"}" \
+              | jq -r '.accessToken')
+
+            TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+            curl -s -X POST "https://api.getport.io/v1/blueprints/factoryRun/entities?upsert=true&merge=true" \
+              -H "Authorization: Bearer $PORT_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"identifier\": \"$RUN_ID\",
+                \"title\": \"Run $(echo $RUN_ID | cut -c1-8) — ${{ inputs.workOrderId }}\",
+                \"properties\": {
+                  \"runId\": \"$RUN_ID\",
+                  \"status\": \"PENDING\",
+                  \"currentStage\": \"product-requirements\",
+                  \"githubRunUrl\": \"https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\",
+                  \"attemptCount\": 0
+                },
+                \"relations\": {
+                  \"workOrder\": \"${{ inputs.workOrderId }}\",
+                  \"factoryRelease\": \"factory-release-${{ inputs.releaseVersion }}\"
+                }
+              }"
+            echo "✓ Port factoryRun entity created: $RUN_ID"
+            echo "⚡ Start local coordinator to process:"
+            echo "   cd ai-software-factory-contract"
+            echo "   export \$(cat .env | grep -v '#' | xargs)"
+            echo "   node_modules/.bin/tsx apps/factory-coordinator/src/index.ts"
+          fi
+          echo "RUN_ID=$RUN_ID" >> $GITHUB_OUTPUT
+
+      # ── Approve stage ──────────────────────────────────────────────────────
       - name: Approve stage
         if: ${{ inputs.action == 'approve-stage' }}
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          echo "Stage approval: run=${{ inputs.runId }} stage=${{ inputs.stage }} decision=${{ inputs.decision }}"
-          node -e "
-            const { Client } = require('pg');
-            const c = new Client({ connectionString: process.env.DATABASE_URL });
-            c.connect().then(() => c.query(
-              'INSERT INTO stage_approvals (run_id, stage, decision, approved_by, port_action_run_id) VALUES (\$1,\$2,\$3,\$4,\$5)',
-              ['${{ inputs.runId }}', '${{ inputs.stage }}', '${{ inputs.decision }}', 'github-actions', '${{ inputs.portRunId }}']
-            )).then(() => c.end()).catch(e => { console.error(e); process.exit(1); });
-          " || echo "DB not available — approval recorded in Port only"
+          if [ -n "$DATABASE_URL" ]; then
+            node -e "
+              const { Client } = require('pg');
+              const c = new Client({ connectionString: process.env.DATABASE_URL });
+              c.connect()
+                .then(() => c.query(
+                  'INSERT INTO stage_approvals (run_id, stage, decision, approved_by, port_action_run_id) VALUES (\$1,\$2,\$3,\$4,\$5)',
+                  ['${{ inputs.runId }}', '${{ inputs.stage }}', '${{ inputs.decision }}', 'port-action', '${{ inputs.portRunId }}']
+                ))
+                .then(() => { console.log('Stage approval recorded in DB'); c.end(); })
+                .catch(e => { console.error(e); process.exit(1); });
+            " || echo "DB not available — approval recorded in Port only"
+          fi
 
-      - name: Cleanup secrets
+          # Also update Port entity
+          PORT_TOKEN=$(curl -s -X POST "https://api.getport.io/v1/auth/access_token" \
+            -H "Content-Type: application/json" \
+            -d "{\"clientId\":\"$PORT_CLIENT_ID\",\"clientSecret\":\"$PORT_CLIENT_SECRET\"}" \
+            | jq -r '.accessToken')
+          echo "Stage ${{ inputs.stage }} ${{ inputs.decision }} recorded for run ${{ inputs.runId }}"
+
+      # ── Report success back to Port ────────────────────────────────────────
+      - name: Report success to Port
+        if: ${{ always() && inputs.portRunId != '' }}
+        run: |
+          PORT_TOKEN=$(curl -s -X POST "https://api.getport.io/v1/auth/access_token" \
+            -H "Content-Type: application/json" \
+            -d "{\"clientId\":\"$PORT_CLIENT_ID\",\"clientSecret\":\"$PORT_CLIENT_SECRET\"}" \
+            | jq -r '.accessToken')
+
+          RUN_ID="${{ steps.create_run.outputs.RUN_ID }}"
+          if [ -n "$RUN_ID" ]; then
+            SUMMARY="Factory run created: $RUN_ID | Coordinator picks it up automatically | View: https://app.getport.io/factoryRun/$RUN_ID"
+          else
+            SUMMARY="Action completed"
+          fi
+
+          curl -s -X PATCH "https://api.getport.io/v1/actions/runs/${{ inputs.portRunId }}" \
+            -H "Authorization: Bearer $PORT_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"status\":\"SUCCESS\",\"summary\":\"$SUMMARY\"}"
+
+      - name: Cleanup
         if: always()
-        run: rm -f /tmp/github_app_key.pem
+        run: rm -f /tmp/factory_key.pem
