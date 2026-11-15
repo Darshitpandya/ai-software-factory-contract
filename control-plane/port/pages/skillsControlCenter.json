@@ -24,11 +24,7 @@
           "columns": [
             {
               "id": "scc-bar",
-              "size": 6
-            },
-            {
-              "id": "scc-bar2",
-              "size": 6
+              "size": 12
             }
           ]
         },
@@ -95,23 +91,6 @@
           }
         },
         {
-          "id": "scc-bar2",
-          "type": "bar-chart",
-          "title": "Skills — by Status",
-          "blueprint": "factorySkill",
-          "property": "property#status",
-          "dataset": {
-            "combinator": "and",
-            "rules": [
-              {
-                "operator": "=",
-                "property": "$blueprint",
-                "value": "factorySkill"
-              }
-            ]
-          }
-        },
-        {
           "id": "scc-skills",
           "type": "table-entities-explorer",
           "title": "All 15 Skills — SHA-256 Locked",
@@ -149,5 +128,5 @@
   "sidebar": "catalog",
   "visibility": "org",
   "protected": false,
-  "after": "mySkills"
+  "after": "agentControlCenter"
 }
