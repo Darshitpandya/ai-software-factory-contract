@@ -55,6 +55,27 @@ if (!verifyOnly) {
   lock.lockedAt = new Date().toISOString();
   writeFileSync(lockPath, JSON.stringify(lock, null, 2));
   console.log(`\n✓ skills.lock.json updated (${changed} changed)`);
+
+  // ── Also recompute sandbox.lock.json configHash ──────────────────────────
+  const sandboxLockPath = "factory-releases/sandbox.lock.json";
+  if (existsSync(sandboxLockPath)) {
+    const sandboxLock = JSON.parse(readFileSync(sandboxLockPath, "utf-8")) as {
+      entries: Array<{ releaseVersion: string; provider: string; imageRef: string; imageDigest: string; resourceLimits: object; configHash: string; verifiedAt: string }>;
+      lockedAt: string;
+    };
+    for (const entry of sandboxLock.entries) {
+      const canonical = JSON.stringify(
+        { imageDigest: entry.imageDigest, imageRef: entry.imageRef, provider: entry.provider, resourceLimits: entry.resourceLimits },
+        Object.keys({ imageDigest: "", imageRef: "", provider: "", resourceLimits: {} }).sort()
+      );
+      const hash = createHash("sha256").update(canonical).digest("hex");
+      entry.configHash = `sha256:${hash}`;
+      entry.verifiedAt = new Date().toISOString();
+    }
+    sandboxLock.lockedAt = new Date().toISOString();
+    writeFileSync(sandboxLockPath, JSON.stringify(sandboxLock, null, 2));
+    console.log(`✓ sandbox.lock.json configHashes recomputed`);
+  }
 } else {
   if (allPassed) {
     console.log(`\n✓ All skill digests verified`);

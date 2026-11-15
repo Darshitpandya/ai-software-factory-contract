@@ -1,0 +1,38 @@
+{
+  "_schema": "factory.sandbox-lock/v1",
+  "_status": "COMPUTED",
+  "lockedAt": "2026-11-15T03:09:07Z",
+  "lockedBy": "pnpm lock-components",
+  "entries": [
+    {
+      "releaseVersion": "1.4.0",
+      "provider": "opensandbox",
+      "imageRef": "node:22-alpine",
+      "imageDigest": "sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a",
+      "resourceLimits": {
+        "cpus": "2.0",
+        "memoryMb": 4096,
+        "ttlSeconds": 3600,
+        "networkEgress": "restricted"
+      },
+      "configHash": "sha256:98012d22ee10276316639322b6aa4483063b71e3bea7e5c7eb128cd4c265ea03",
+      "verifiedAt": "2026-11-15T03:09:07Z",
+      "notes": "node:22-alpine with factory toolchain. configHash is SHA-256 of canonical JSON: {imageDigest, imageRef, provider, resourceLimits} sorted keys."
+    },
+    {
+      "releaseVersion": "1.5.0",
+      "provider": "opensandbox",
+      "imageRef": "node:22-alpine",
+      "imageDigest": "sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a",
+      "resourceLimits": {
+        "cpus": "2.0",
+        "memoryMb": 4096,
+        "ttlSeconds": 3600,
+        "networkEgress": "restricted"
+      },
+      "configHash": "sha256:98012d22ee10276316639322b6aa4483063b71e3bea7e5c7eb128cd4c265ea03",
+      "verifiedAt": "2026-11-15T03:09:07Z",
+      "notes": "Same sandbox config as 1.4.0 baseline. Only model assignments differ in 1.5.0 candidate."
+    }
+  ]
+}

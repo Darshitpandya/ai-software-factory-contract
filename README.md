@@ -3,10 +3,10 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 [![Skills: Apache-2.0](https://img.shields.io/badge/Skills-Apache--2.0-orange?style=flat-square)](factory-releases/skills.lock.json)
 [![Factory Release](https://img.shields.io/badge/Factory%20Release-1.4.0%20active-brightgreen?style=flat-square)](factory-releases/1.4.0/factory-release.yaml)
-[![CI](https://img.shields.io/badge/CI-passing-brightgreen?style=flat-square&logo=githubactions&logoColor=white)](https://github.com/Darshitpandya/ai-software-factory-contract/actions)
+[![CI](https://github.com/Darshitpandya/ai-software-factory-contract/actions/workflows/verify-repo.yml/badge.svg)](https://github.com/Darshitpandya/ai-software-factory-contract/actions/workflows/verify-repo.yml)
 [![GitHub Stars](https://img.shields.io/github/stars/Darshitpandya/ai-software-factory-contract?style=flat-square&logo=github)](https://github.com/Darshitpandya/ai-software-factory-contract/stargazers)
 [![15 Skills](https://img.shields.io/badge/Skills-15%20locked-blueviolet?style=flat-square)](factory-releases/skills.lock.json)
-[![Claude](https://img.shields.io/badge/Claude-opus--5--5-5B21B6?style=flat-square)](https://platform.claude.com/docs/en/models/overview)
+[![Claude](https://img.shields.io/badge/Claude-sonnet%20%7C%20opus%20%7C%20haiku-5B21B6?style=flat-square)](docs/models.md)
 [![Port](https://img.shields.io/badge/Port-control%20plane-0096FF?style=flat-square)](https://app.getport.io)
 
 **Build Once · Verify Every Run · Evolve Safely**
@@ -291,11 +291,16 @@ Port is the control plane: it holds the catalog, owns workflow dispatch, and sur
 
 ### Actions (created in Port, dispatch GitHub workflows)
 
-| Action | Blueprint | Workflow |
-|---|---|---|
-| `createWorkOrder` | workOrder | `factory-run.yml` |
-| `resumeFactoryRun` | factoryRun | `factory-retry.yml` |
-| `evaluateRelease` | factoryRelease | `factory-eval.yml` |
+| Action | Blueprint | Workflow | Description |
+|---|---|---|---|
+| `createWorkOrder` | workOrder | `factory-run.yml` | Create a new work order |
+| `triggerFactoryRun` | workOrder | `factory-run.yml` | ▶ Start factory for a work order |
+| `resumeFactoryRun` | factoryRun | `factory-retry.yml` | Resume interrupted run |
+| `approveStage` | factoryRun | `factory-run.yml` | ✅ Manually gate a stage |
+| `cancelFactoryRun` | factoryRun | `factory-retry.yml` | ⏹ Stop a running factory |
+| `runFactoryEvaluation` | factoryRelease | `factory-eval.yml` | 📊 Compare candidate vs base |
+| `evaluateRelease` | factoryRelease | `factory-eval.yml` | 📋 Report on comparison |
+| `promoteFactoryRelease` | factoryRelease | `factory-promote.yml` | 🚀 Promote candidate to active |
 
 ### Getting Port credentials
 
@@ -349,15 +354,17 @@ None of these values belong in a committed file. Use `.env` locally (in `.gitign
 
 ## Factory Release Model Assignments
 
-**Release 1.4.0 (ACTIVE)** — `defaultModel: claude-opus-5-5`
+**Release 1.4.0 (ACTIVE)** — per-stage model assignment, not a single model for all stages
 
 | Stage | Model | Why |
 |---|---|---|
-| `product-requirements` | `claude-opus-5-5` | Requirements analysis |
-| `software-architecture` | `claude-opus-5-5` | ADRs + OpenAPI reasoning |
-| `software-engineering` | `claude-opus-5-5` | Code generation + tests |
-| `security-compliance` | `claude-opus-5-5` | Policy matching |
-| `platform-operations` | `claude-opus-5-5` | Health checks + deployment |
+| `product-requirements` | `claude-sonnet-5-5` | Requirements: creative + structured; Sonnet's speed/intelligence balance |
+| `software-architecture` | `claude-opus-5-5` | ADRs + OpenAPI: deep reasoning over compatibility constraints |
+| `software-engineering` | `claude-opus-5-5` | Code generation + tests: long-horizon, full context window needed |
+| `security-compliance` | `claude-sonnet-5-5` | Policy matching + structured evidence; Sonnet is sufficient |
+| `platform-operations` | `claude-haiku-5-5` | Health checks, deployment plans; fast structured output |
+
+Typical cost: ~$2.00–$2.80 per full 5-stage run. See [docs/models.md](docs/models.md) for the full model selection guide and cost breakdown.
 
 **Release 1.5.0 (CANDIDATE)** — Option B: only two stage overrides in `stageModels`:
 ```yaml

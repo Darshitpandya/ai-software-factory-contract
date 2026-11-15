@@ -1,56 +1,112 @@
 # Evidence Directory
 
-This directory contains **factory run evidence** — real artifacts produced by or verified during factory stage execution.
+Real artifacts produced by live factory runs. Every file here was written by Claude during an actual coordinator execution or captured from a real deployment.
 
-## Format
+**Policy:** `evidence/runs/` contains only real execution evidence — no synthetic data, no fabricated approvals. If a stage was blocked or produced partial output, it is recorded as-is.
 
-Each factory run stores evidence under `evidence/runs/{run-id}/`:
+---
+
+## Directory Structure
 
 ```
-evidence/runs/{run-id}/
-  stage-artifacts/
-    product-requirements/
-      product-spec.md        ← produced by Factory 1
-      acceptance.yaml
-      work-items.json
-    software-architecture/
-      adr-0007-invoice-export.md   ← produced by Factory 2
-      openapi.yaml
-      architecture-evidence.json
-    software-engineering/
-      execution-manifest.json  ← produced by Factory 3
-      test-results.json
-    security-compliance/
-      security-findings.json   ← produced by Factory 4
-      scan-evidence.json
-    platform-operations/
-      deployment.json          ← produced by Factory 5
-      health-evidence.json
-  factory-run-summary.json
+evidence/
+└── runs/
+    └── {run-id}/
+        ├── {stage}/
+        │   ├── {artifact-id}/
+        │   │   └── artifact.json        ← manifest: model used, tokens, SHA-256, status
+        │   └── workspace/
+        │       ├── work-order.json      ← work order context seeded before Claude ran
+        │       ├── README.md            ← workspace README seeded before Claude ran
+        │       └── *.md / *.yaml / *.json  ← files Claude produced during the stage
+        └── ...
 ```
 
-## Reference Run: `run-demo-invoice-export-001`
+Each stage that completed successfully has:
+- `{artifact-id}/artifact.json` — machine-readable manifest with `modelUsed`, `tokenUsage`, `sha256`, `producerStatus`, `factoryRelease`
+- `workspace/` — the full workspace directory at the time artifacts were captured, including every file Claude wrote
 
-The reference run for the billing API invoice export WorkOrder.
+---
 
-**Key evidence items:**
-- Engineering stage PR: `https://github.com/Darshitpandya/factory-reference-billing-api/pull/2`
-- Attempt 1 SHA: `c93d20e73638569e7aa37000f5d0eb63c3989013` → `factory-contract/acceptance: FAILURE`
-- Attempt 2 SHA: `fdbbdd0e1f11e9179a316a3f34aaf9695eab5313` → `factory-contract/acceptance: SUCCESS`
-- Verifier: `https://web-production-fff93264.up.railway.app`
+## Real Output Files by Stage
 
-## Capturing Evidence
+| Stage | Files Claude produces |
+|-------|----------------------|
+| `product-requirements` | `product-spec.md` · `acceptance.yaml` · `work-items.json` |
+| `software-architecture` | `architecture.md` · `openapi-delta.yaml` · `adr.md` |
+| `software-engineering` | `implementation-notes.md` · `pr-description.md` |
+| `security-compliance` | `security-review.md` · `compliance-checklist.md` |
+| `platform-operations` | `deployment.json` · `health-evidence.json` · `runbook.md` |
+
+---
+
+## Reference Runs
+
+### `run-billing-invoice-export-live-001`
+WorkOrder: `wo-billing-invoice-export-001` — Tenant-Scoped Invoice Export  
+Release: 1.4.0 · All 5 stages ACCEPTED
+
+**Engineering stage — the breaking-change demo:**
+- PR created: `https://github.com/Darshitpandya/factory-reference-billing-api/pull/2`
+- Attempt A SHA: `c93d20e73638569e7aa37000f5d0eb63c3989013` → `factory-contract/acceptance: FAILURE` ❌
+- Attempt B SHA: `fdbbdd0e1f11e9179a316a3f34aaf9695eab5313` → `factory-contract/acceptance: SUCCESS` ✅
+- oasdiff finding: `required request parameter added: 'tenant_id' in query on GET /v1/invoices`
+
+### `64e3fe0a-0bbc-4e2a-bbef-accebe598748`
+WorkOrder: `wo-notification-schema-001` — Notification Event Schema  
+Release: 1.4.0 · All 5 stages ACCEPTED · 170,221 tokens · ~$2.08
+
+Workspace artifacts available for all 5 stages. See:
+- `64e3fe0a-0bbc-4e2a-bbef-accebe598748/software-architecture/workspace/architecture.md`
+- `64e3fe0a-0bbc-4e2a-bbef-accebe598748/security-compliance/workspace/security-review.md`
+
+### `92b970ee-c073-4d80-9053-40937cbbdb98`
+WorkOrder: `wo-notification-schema-001` — Notification Event Schema  
+Release: 1.4.0 · All 5 stages ACCEPTED · 153,166 tokens · ~$1.95
+
+---
+
+## Artifact Manifest Format
+
+```json
+{
+  "id": "uuid",
+  "runId": "uuid",
+  "stage": "software-architecture",
+  "producedAt": "2026-11-14T...",
+  "files": [
+    {
+      "path": "architecture.md",
+      "sha256": "...",
+      "sizeBytes": 4821,
+      "mimeType": "text/markdown"
+    }
+  ],
+  "sha256": "bundle-sha256-of-all-files",
+  "producerStatus": "PRODUCED",
+  "modelUsed": "claude-opus-5-5",
+  "factoryRelease": "1.4.0",
+  "tokenUsage": {
+    "inputTokens": 26340,
+    "outputTokens": 7282
+  }
+}
+```
+
+---
+
+## Verifying Evidence Integrity
 
 ```bash
-# Verify evidence bundle for a completed run
-pnpm factory evidence:verify --run-id <id>
-
-# Capture and package evidence after a run
-pnpm exec tsx scripts/capture-evidence.ts --run-id <id>
+# Verify evidence bundle SHA-256 matches recorded artifact manifest
+pnpm factory evidence:verify --run-id 64e3fe0a-0bbc-4e2a-bbef-accebe598748
 ```
 
-## Note on synthetic fixtures
+---
 
-Files under `evidence/fixtures/` are explicitly labeled synthetic test fixtures.
-Files under `evidence/runs/` contain only real execution evidence.
-Do not place invented results in `evidence/runs/`.
+## Verifier
+
+The independent trusted verifier that posts `factory-contract/acceptance` checks:  
+`https://web-production-fff93264.up.railway.app` — health: `/health`
+
+The verifier runs `oasdiff breaking` between the OpenAPI baseline and each PR head SHA. It is independently owned and cannot be influenced by the factory producer.
