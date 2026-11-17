@@ -5,24 +5,24 @@ node_modules/
 dist/
 *.tsbuildinfo
 
-# Environment — never commit real credentials
+# Local environment — never commit credentials
 .env
 .env.local
 *.env
 
-# Package manager
+# Package manager artifacts
 pnpm-lock.yaml.bak
 
 # Test coverage
 coverage/
 .cache/
 
-# Evidence — workspace context files are auto-seeded by the coordinator at runtime.
-# They contain no Claude-produced content; only the actual output files matter.
-evidence/runs/*/workspace/README.md
-evidence/runs/*/workspace/work-order.json
+# Coordinator seeds these files into each stage workspace before execution.
+# They contain run context, not Claude-produced output.
+evidence/runs/*/*/workspace/README.md
+evidence/runs/*/*/workspace/work-order.json
 
-# Terraform — state files and local variable overrides contain secrets
+# Terraform local state and variable overrides contain secrets
 infra/terraform/.terraform/
 infra/terraform/.terraform.lock.hcl
 infra/terraform/terraform.tfstate
