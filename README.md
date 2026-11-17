@@ -278,7 +278,43 @@ All commands exit nonzero on failure, write machine-readable JSON where applicab
 
 Port is the control plane: it holds the catalog, owns workflow dispatch, and surfaces run visibility to your team.
 
-### Blueprints (auto-created by `pnpm factory port:apply`)
+### Setting up a fresh Port org (full control plane)
+
+Three steps — in order:
+
+**Step 1: Create blueprints with Terraform**
+
+```bash
+cd infra/terraform
+cp terraform.tfvars.example terraform.tfvars
+# Fill in: port_client_id, port_client_secret, github_token, github_owner
+terraform init
+terraform apply
+# Creates all 7 blueprints, seed entities, and GitHub branch protection
+```
+
+**Step 2: Restore page layouts**
+
+```bash
+export PORT_CLIENT_ID=your-client-id
+export PORT_CLIENT_SECRET=your-client-secret
+python3 control-plane/port/apply-pages.py
+# Idempotent — restores all 12 dashboard and entity page layouts
+```
+
+**Step 3: Populate run data after executing the factory**
+
+```bash
+export PORT_CLIENT_ID=your-client-id
+export PORT_CLIENT_SECRET=your-client-secret
+python3 scripts/backfill-port-runs.py
+# Reads evidence/runs/ artifact files, computes token counts and costs,
+# updates Port entities. Run after any factory run completes.
+```
+
+That is the complete sequence. No manual clicks in Port required.
+
+### Blueprints (created by Terraform / `pnpm factory port:apply`)
 
 | Blueprint | Purpose |
 |---|---|
