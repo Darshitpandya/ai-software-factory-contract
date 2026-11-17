@@ -1,130 +1,63 @@
 # AI Software Factory Contract
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
-[![Skills: Apache-2.0](https://img.shields.io/badge/Skills-Apache--2.0-orange?style=flat-square)](factory-releases/skills.lock.json)
 [![Factory Release](https://img.shields.io/badge/Factory%20Release-1.4.0%20active-brightgreen?style=flat-square)](factory-releases/1.4.0/factory-release.yaml)
 [![CI](https://github.com/Darshitpandya/ai-software-factory-contract/actions/workflows/verify-repo.yml/badge.svg)](https://github.com/Darshitpandya/ai-software-factory-contract/actions/workflows/verify-repo.yml)
-[![GitHub Stars](https://img.shields.io/github/stars/Darshitpandya/ai-software-factory-contract?style=flat-square&logo=github)](https://github.com/Darshitpandya/ai-software-factory-contract/stargazers)
 [![15 Skills](https://img.shields.io/badge/Skills-15%20locked-blueviolet?style=flat-square)](factory-releases/skills.lock.json)
 [![Claude](https://img.shields.io/badge/Claude-sonnet%20%7C%20opus%20%7C%20haiku-5B21B6?style=flat-square)](docs/models.md)
 [![Port](https://img.shields.io/badge/Port-control%20plane-0096FF?style=flat-square)](https://app.getport.io)
 
 **Build Once · Verify Every Run · Evolve Safely**
 
-A production-oriented engineering factory that takes a `WorkOrder` through five real production capabilities — Product & Requirements, Software Architecture, Software Engineering, Security & Compliance, and Platform & Operations — publishes independently validated artifacts at each handoff, and blocks an unacceptable PR under a verifier the producer cannot control.
+A production-oriented engineering factory: a `WorkOrder` moves through five specialised stages, each producing independently verified artifacts, until a trusted verifier the producer cannot control either accepts or blocks the final handoff.
 
-Works with **Claude Code** · **GitHub Actions** · **Port** · **OpenSandbox**
-
-[Get started](#quick-start) · [Architecture](#architecture) · [All commands](#commands-reference) · [Port setup](#port-setup) · [Extend to your repo](#adopter-guide) · [Contributing](CONTRIBUTING.md) · [Models](docs/models.md)
+[Get started](#quick-start) · [Architecture](#architecture) · [Commands](#commands-reference) · [Port setup](#port-setup) · [Adopt this](#adopter-guide) · [Contributing](CONTRIBUTING.md) · [Models](docs/models.md)
 
 ---
 
 ## What this is
 
-This is not an agent framework, a CI/CD replacement, or a governance tool. It is a **versioned production factory**:
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/s07-two-release-contracts-dark.png">
+  <img src="docs/diagrams/s07-two-release-contracts-light.png" alt="Two release contracts" width="860">
+</picture>
 
-- Five specialized production stages each produce artifact evidence; none accepts its own output.
-- An independent trusted verifier runs `oasdiff` against the OpenAPI baseline and posts a `factory-contract/acceptance` GitHub check the factory producer cannot forge.
-- Every factory configuration is a versioned `FactoryRelease`. Promoting a candidate requires measured evaluation against fixed workloads, not an AI opinion.
-- A second consumer repository (`factory-reference-notification-api`, Python) uses the same factory release, proving the production machinery is reusable — not a one-off workflow.
+Two independent contracts govern the system. Contract One controls what the factory produces — engineering changes, artifacts, PRs. Contract Two controls the factory itself — model selection, skill versions, evaluation, promotion. Neither contract can satisfy the other's acceptance requirements.
 
-```
-Port Control Plane + Context Lake
-        │
-        ▼
-  WorkOrder Resolution
-        │
-        ▼
-  GitHub Actions: factory-run.yml
-        │
-        ▼
-  Factory Coordinator (Node.js, PostgreSQL-backed)
-        │
-   ┌────┴────────────────────────────────┐
-   │  Claude Agent SDK                   │
-   │  AGENTS.md  SKILL.md   MCP tools    │
-   │                │                    │
-   │         OpenSandbox                 │
-   │         (isolated execution)        │
-   └──────────────────────────────────── ┘
-        │
-        ▼
-  Stage Artifacts → PR → GitHub Check
-        │
-        ▼
-  Trusted Verifier (separate repo, separate App)
-  factory-contract/acceptance: success | failure
-        │
-        ▼
-  Next Stage or BLOCKED
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/s19-five-interfaces-dark.png">
+  <img src="docs/diagrams/s19-five-interfaces-light.png" alt="Five Factory Contract interfaces" width="860">
+</picture>
 
----
-
-## The Four Repositories
-
-| Repo | Role | Owner |
-|---|---|---|
-| **This repo** | Factory contracts, Port model, coordinator, Claude executor, 5 stages, evaluation, CLI | Platform/factory owners |
-| [`ai-factory-trusted-verifier`](https://github.com/Darshitpandya/ai-factory-trusted-verifier) | Independently owned verifier — GitHub App, oasdiff, protected policies | Security/verification owners (separate from producer) |
-| [`factory-reference-billing-api`](https://github.com/Darshitpandya/factory-reference-billing-api) | TypeScript reference consumer — tenant-scoped invoice export, the breaking-change demo | Billing domain |
-| [`factory-reference-notification-api`](https://github.com/Darshitpandya/factory-reference-notification-api) | Python reference consumer — proves factory reuse with event schema, PII, delivery | Notifications domain |
-
-The trust boundary that makes the demo real: the billing and notification repos require the `factory-contract/acceptance` check from the **verifier's GitHub App** — the factory producer's App identity cannot satisfy that requirement.
+Five interfaces define the boundary at every handoff: **WorkOrder**, **Artifact & Handoff**, **Execution**, **Acceptance & Evidence**, **FactoryRelease**. A contract is not a prompt. It is an executable agreement among a producer, a consumer, and the systems authorised to decide.
 
 ---
 
 ## Architecture
 
-### Five production stages
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/s09-five-factories-pipeline-dark.png">
+  <img src="docs/diagrams/s09-five-factories-pipeline-light.png" alt="Five factories, one production value stream" width="860">
+</picture>
 
-```
-  WorkOrder
-      │
-      ▼
-┌─────────────────────────────────┐
-│ 1. Product & Requirements       │  output: product-spec.md, acceptance.yaml, work-items.json
-│    skills: requirements-analysis│
-│            acceptance-criteria  │
-│            work-decomposition   │
-└──────────────┬──────────────────┘
-               │ ACCEPTED
-               ▼
-┌─────────────────────────────────┐
-│ 2. Software Architecture        │  output: adr-0007-*.md, openapi.yaml, architecture-evidence.json
-│    skills: architecture-options │
-│            adr-authoring        │
-│            openapi-contract     │
-└──────────────┬──────────────────┘
-               │ ACCEPTED
-               ▼
-┌─────────────────────────────────┐
-│ 3. Software Engineering         │  output: source PR, test-results.json, execution-manifest.json
-│    skills: feature-implementation│            ⬆ this is what the verifier checks
-│            test-driven-change   │
-│            safe-refactor        │
-└──────────────┬──────────────────┘
-               │ factory-contract/acceptance (from TRUSTED VERIFIER — not from this repo)
-               ▼
-┌─────────────────────────────────┐
-│ 4. Security & Compliance        │  output: security-findings.json, scan-evidence.json
-│    skills: security-review      │
-│            vulnerability-remediation
-│            compliance-evidence  │
-└──────────────┬──────────────────┘
-               │ ACCEPTED
-               ▼
-┌─────────────────────────────────┐
-│ 5. Platform & Operations        │  output: deployment.json, health-evidence.json
-│    skills: release-assessment   │
-│            incident-triage      │
-│            remediation-plan     │
-└──────────────┬──────────────────┘
-               │ ACCEPTED
-               ▼
-         FactoryRun: COMPLETED
-         (visible in Port)
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/s14-three-authorities-dark.png">
+  <img src="docs/diagrams/s14-three-authorities-light.png" alt="Control, execution and acceptance are separate authorities" width="860">
+</picture>
+
+Port does not replace GitHub merge rules. An agent does not set its own acceptance criteria. A local test is not an authoritative repository check. In this reference implementation the coordinator runs on a workstation; in production it is a deployed service.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/s15-tool-ecosystem-dark.png">
+  <img src="docs/diagrams/s15-tool-ecosystem-light.png" alt="Existing tools, clear responsibilities" width="860">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/s11-factoryrun-hierarchy-dark.png">
+  <img src="docs/diagrams/s11-factoryrun-hierarchy-light.png" alt="FactoryRun accountability hierarchy" width="860">
+</picture>
+
+A producing stage cannot unilaterally certify its own downstream readiness. Every object links to a FactoryRun, a FactoryRelease, a target repository, and the relevant acceptance record.
 
 ### Component map
 
@@ -132,124 +65,97 @@ The trust boundary that makes the demo real: the billing and notification repos 
 packages/
   contract-types/     TypeScript interfaces for all factory records
   port-client/        Port API: token renewal, entity upsert, action run reporting
-  github-client/      GitHub App: read + PR create (producer App, scoped)
+  github-client/      GitHub App: file reads + PR creation (producer App, scoped)
   state-machine/      PostgreSQL-backed stages, leases, idempotency, retries
-  claude-executor/    @anthropic-ai/sdk agentic loop; loads AGENTS.md + SKILL.md per stage
-                      Model resolved from FactoryRelease: stageModels[stage] ?? defaultModel
-  sandbox-adapter/    Local-docker (dev) or OpenSandbox API (CI/hardened)
+  claude-executor/    Anthropic SDK agentic loop; loads AGENTS.md + SKILL.md per stage
+  sandbox-adapter/    Local temp dirs (dev) or OpenSandbox API (CI/hardened)
   artifact-store/     SHA-256 bundle collection and evidence persistence
   acceptance-client/  Polls GitHub Checks API for factory-contract/acceptance verdict
 
 apps/
-  factory-cli/        CLI: doctor, run, resume, evaluate, promote, port:apply, teardown
+  factory-cli/          CLI: doctor, run, resume, evaluate, promote, port:apply, teardown
   factory-coordinator/  Stateful coordinator worker; PostgreSQL leases, outbox, retries
-  factory-stage-runner/ Scoped per-stage process invoked by coordinator
 
 factories/
-  product-requirements/   AGENTS.md, 3×SKILL.md, verify-requirements.ts, workflow.yaml
-  software-architecture/  AGENTS.md, 3×SKILL.md, verify-architecture.ts
-  software-engineering/   AGENTS.md, 3×SKILL.md, verify-engineering.ts
-  security-compliance/    AGENTS.md, 3×SKILL.md, verify-security.ts
-  platform-operations/    AGENTS.md, 3×SKILL.md, verify-deployment.ts
+  product-requirements/   AGENTS.md, 3×SKILL.md, acceptance.yaml, verify script
+  software-architecture/  AGENTS.md, 3×SKILL.md, acceptance.yaml, verify script
+  software-engineering/   AGENTS.md, 3×SKILL.md, acceptance.yaml, verify script
+  security-compliance/    AGENTS.md, 3×SKILL.md, acceptance.yaml, verify script
+  platform-operations/    AGENTS.md, 3×SKILL.md, acceptance.yaml, verify script
 
 factory-releases/
-  1.4.0/factory-release.yaml   ACTIVE — sonnet-5-5 (requirements/security) + opus-5-5 (architecture/engineering) + haiku-5-5 (platform-ops)
-  1.5.0/factory-release.yaml   CANDIDATE — fable-5-2 for architecture+engineering; others unchanged
-  active.yaml                  Protected pointer; only updated via pnpm factory promote
-  skills.lock.json             Real SHA-256 digests for all 15 skills (run pnpm lock-components)
-  tools.lock.json              MCP endpoint identities + approved tool names
+  1.4.0/factory-release.yaml   ACTIVE — per-stage model assignments + sandbox config
+  1.5.0/factory-release.yaml   CANDIDATE — arch + eng use claude-fable-5-2
+  active.yaml                  Protected pointer; update only via pnpm factory promote
+  skills.lock.json             Real SHA-256 digests for all 15 skills
 ```
+
+---
+
+## The Four Repositories
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/s46-reuse-across-repositories-dark.png">
+  <img src="docs/diagrams/s46-reuse-across-repositories-light.png" alt="One factory release, two repository contracts" width="860">
+</picture>
+
+| Repo | Role |
+|------|------|
+| **This repo** | Factory engine — contracts, coordinator, executor, 5 stages, evaluation, CLI |
+| [`ai-factory-trusted-verifier`](https://github.com/Darshitpandya/ai-factory-trusted-verifier) | Independently owned verifier — GitHub App, oasdiff, protected policies |
+| [`factory-reference-billing-api`](https://github.com/Darshitpandya/factory-reference-billing-api) | TypeScript consumer — invoice export, the breaking-change demo |
+| [`factory-reference-notification-api`](https://github.com/Darshitpandya/factory-reference-notification-api) | Python consumer — event schema, PII controls, reuse proof |
+
+The trust boundary: the billing and notification repos require `factory-contract/acceptance` from the **verifier's GitHub App** — the producer App cannot satisfy it.
 
 ---
 
 ## Quick Start
 
-**Prerequisites:** Node.js ≥ 22, pnpm ≥ 9, Docker, a PostgreSQL instance, Port organization, Anthropic API key, GitHub account.
-
-### 1. Clone and install
+**Prerequisites:** Node.js ≥ 22, pnpm ≥ 9, Docker, PostgreSQL, Port org, Anthropic API key.
 
 ```bash
 git clone https://github.com/Darshitpandya/ai-software-factory-contract.git
 cd ai-software-factory-contract
 pnpm install
-```
-
-### 2. Configure credentials
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` and fill in:
-
-```
-PORT_CLIENT_ID=your-port-client-id
-PORT_CLIENT_SECRET=your-port-client-secret
-ANTHROPIC_API_KEY=sk-ant-...
-DATABASE_URL=postgresql://factory:factory@localhost:5432/factory
-```
-
-### 3. Start local infrastructure
-
-```bash
+cp .env.example .env          # fill in PORT_*, ANTHROPIC_API_KEY, DATABASE_URL
 docker compose -f infra/local/docker-compose.yaml up -d
-# PostgreSQL starts on :5432, coordinator on :3001
-```
-
-### 4. Bootstrap
-
-```bash
-pnpm bootstrap
-# Runs: DB migrations → skills.lock.json → Port entities → registry verify
-```
-
-### 5. Check everything
-
-```bash
+pnpm bootstrap                 # migrations → skills.lock → Port entities → registry verify
 pnpm factory doctor --profile local-dev
 ```
 
-Expected output: all green except GitHub App (optional for local-dev) and OpenSandbox (falls back to local temp directories).
-
-### 6. Apply Port control plane
+Start the coordinator (keeps running, picks up work orders automatically):
 
 ```bash
-pnpm factory port:apply
-# Creates: service entities, factory release entities (1.4.0 + 1.5.0)
+nohup node_modules/.bin/tsx apps/factory-coordinator/src/index.ts > /tmp/coordinator.log 2>&1 &
 ```
 
-### 7. Run a factory
+Trigger a factory run from Port (create a WorkOrder entity → click **▶ Trigger Factory Run**) or from the CLI:
 
 ```bash
-# Create a WorkOrder in Port UI → it dispatches factory-run.yml
-# Or trigger locally (requires Port WorkOrder entity to exist):
 pnpm factory run --work-order wo-billing-invoice-export-001 --release 1.4.0
 ```
-
-Watch progress at `app.getport.io` → Catalog → Factory Runs.
 
 ---
 
 ## Commands Reference
 
 ```bash
-# Health and setup
-pnpm factory doctor --profile local-dev        # check all prerequisites
-pnpm factory doctor --profile ci-integration   # stricter: OpenSandbox required
-pnpm bootstrap                                  # one-time: migrations + lock + Port + registry
-
-# Port control plane
-pnpm factory port:plan                          # show planned diffs, no mutation
-pnpm factory port:apply                         # idempotent Port entity creation
-
-# Skills registry
-pnpm factory registry:verify                   # SHA-256 verify all 15 skills
-pnpm lock-components                           # recompute + write skills.lock.json
+# Health
+pnpm factory doctor --profile local-dev
 
 # Factory runs
 pnpm factory run --work-order <id> --release 1.4.0
-pnpm factory run --work-order <id> --release 1.4.0 --dry-run   # resolve only
-pnpm factory resume --run-id <id>              # idempotent; skips already-accepted stages
+pnpm factory run --work-order <id> --release 1.4.0 --dry-run
+pnpm factory resume --run-id <uuid>
+
+# Port control plane
+pnpm factory port:plan
+pnpm factory port:apply
+
+# Skills registry
+pnpm factory registry:verify
+pnpm lock-components
 
 # Evaluation
 pnpm factory evaluation:run --base 1.4.0 --candidate 1.5.0
@@ -259,220 +165,155 @@ pnpm factory evaluation:report --comparison <id>
 pnpm factory promote --candidate 1.5.0 --decision <id>
 
 # Evidence
-pnpm factory evidence:verify --run-id <id>
+pnpm factory evidence:verify --run-id <uuid>
 
 # CI
-pnpm typecheck
-pnpm lint
-pnpm test                                       # vitest --passWithNoTests
-
-# Teardown
-pnpm factory teardown --profile local-dev       # stop Docker, clean sandbox temps
+pnpm typecheck && pnpm lint && pnpm test
 ```
 
-All commands exit nonzero on failure, write machine-readable JSON where applicable, and use the same schemas as the API.
+---
+
+## Factory Release Model Assignments
+
+**Release 1.4.0 (ACTIVE)** — per-stage assignments, not a single model:
+
+| Stage | Model | Rationale |
+|-------|-------|-----------|
+| `product-requirements` | `claude-sonnet-5-5` | Requirements: creative + structured |
+| `software-architecture` | `claude-opus-5-5` | ADRs + OpenAPI: deep reasoning |
+| `software-engineering` | `claude-opus-5-5` | Code + tests: long-horizon |
+| `security-compliance` | `claude-sonnet-5-5` | Policy matching: fast + structured |
+| `platform-operations` | `claude-haiku-5-5` | Health checks: fast + cheap |
+
+Pricing: opus $15/$75 · sonnet $3/$15 · haiku $0.25/$1.25 per million tokens.
+Typical cost per 5-stage run: **~$2.10**. See [docs/models.md](docs/models.md) for the full guide.
+
+**Release 1.5.0 (CANDIDATE):**
+```yaml
+stageModels:
+  software-architecture: claude-fable-5-2
+  software-engineering:  claude-fable-5-2
+  # other stages fall back to defaultModel: claude-opus-5-5
+```
 
 ---
 
 ## Port Setup
 
-Port is the control plane: it holds the catalog, owns workflow dispatch, and surfaces run visibility to your team.
+Port is the control plane. Three steps for a fresh org:
 
-### Setting up a fresh Port org (full control plane)
-
-Three steps — in order:
-
-**Step 1: Create blueprints with Terraform**
-
+**1. Blueprints — Terraform**
 ```bash
-cd infra/terraform
-cp terraform.tfvars.example terraform.tfvars
+cd infra/terraform && cp terraform.tfvars.example terraform.tfvars
 # Fill in: port_client_id, port_client_secret, github_token, github_owner
-terraform init
-terraform apply
-# Creates all 7 blueprints, seed entities, and GitHub branch protection
+terraform init && terraform apply
 ```
 
-**Step 2: Restore page layouts**
-
+**2. Pages — restore script**
 ```bash
-export PORT_CLIENT_ID=your-client-id
-export PORT_CLIENT_SECRET=your-client-secret
+export PORT_CLIENT_ID=... PORT_CLIENT_SECRET=...
 python3 control-plane/port/apply-pages.py
-# Idempotent — restores all 12 dashboard and entity page layouts
 ```
 
-**Step 3: Populate run data after executing the factory**
-
+**3. Data — backfill after runs**
 ```bash
-export PORT_CLIENT_ID=your-client-id
-export PORT_CLIENT_SECRET=your-client-secret
 python3 scripts/backfill-port-runs.py
-# Reads evidence/runs/ artifact files, computes token counts and costs,
-# updates Port entities. Run after any factory run completes.
 ```
 
-That is the complete sequence. No manual clicks in Port required.
-
-### Blueprints (created by Terraform / `pnpm factory port:apply`)
+### Blueprints
 
 | Blueprint | Purpose |
-|---|---|
+|-----------|---------|
 | `service` | A deployable service tracked by the factory |
 | `workOrder` | A versioned engineering intent |
 | `factoryRelease` | A pinned, locked factory configuration |
 | `factoryRun` | End-to-end execution and evidence record |
 | `promotionDecision` | Recorded promote / hold / reject decision |
 | `factoryComponent` | Skill, MCP tool, sandbox image in the registry |
+| `factorySkill` | Individual skill with SHA-256 digest |
 
-### Actions (created in Port, dispatch GitHub workflows)
+### Self-service actions
 
-| Action | Blueprint | Workflow | Description |
-|---|---|---|---|
-| `createWorkOrder` | workOrder | `factory-run.yml` | Create a new work order |
-| `triggerFactoryRun` | workOrder | `factory-run.yml` | ▶ Start factory for a work order |
-| `resumeFactoryRun` | factoryRun | `factory-retry.yml` | Resume interrupted run |
-| `approveStage` | factoryRun | `factory-run.yml` | ✅ Manually gate a stage |
-| `cancelFactoryRun` | factoryRun | `factory-retry.yml` | ⏹ Stop a running factory |
-| `runFactoryEvaluation` | factoryRelease | `factory-eval.yml` | 📊 Compare candidate vs base |
-| `evaluateRelease` | factoryRelease | `factory-eval.yml` | 📋 Report on comparison |
-| `promoteFactoryRelease` | factoryRelease | `factory-promote.yml` | 🚀 Promote candidate to active |
+| Action | Blueprint | Workflow |
+|--------|-----------|---------|
+| `createWorkOrder` | workOrder | `factory-run.yml` |
+| `triggerFactoryRun` | workOrder | `factory-run.yml` |
+| `resumeFactoryRun` | factoryRun | `factory-retry.yml` |
+| `approveStage` | factoryRun | `factory-run.yml` |
+| `cancelFactoryRun` | factoryRun | `factory-retry.yml` |
+| `runFactoryEvaluation` | factoryRelease | `factory-eval.yml` |
+| `promoteFactoryRelease` | factoryRelease | `factory-promote.yml` |
 
 ### Getting Port credentials
 
-1. Go to `app.getport.io` → Organization Settings → Credentials
-2. Create a machine account; copy `clientId` and `clientSecret`
-3. Store as GitHub secrets `PORT_CLIENT_ID` and `PORT_CLIENT_SECRET`
+1. `app.getport.io` → Organization Settings → Credentials → create machine account
+2. Copy `clientId` and `clientSecret`
+3. Set as GitHub secrets `PORT_CLIENT_ID` and `PORT_CLIENT_SECRET`
 
 ---
 
 ## GitHub Apps Setup
 
-Two Apps are required for the independent acceptance boundary to work.
+Two Apps required for the independent acceptance boundary:
 
-### Producer App (factory repo)
-Permissions: `contents:read`, `pull_requests:write`, `actions:write`, `metadata:read`
-Install on: `factory-reference-billing-api`, `factory-reference-notification-api`
+| App | Owned by | Permissions | Installs on |
+|-----|---------|-------------|-------------|
+| Producer App | This repo | `contents:read`, `pull_requests:write`, `actions:write` | Consumer repos |
+| Verifier App | `ai-factory-trusted-verifier` | `contents:read`, `checks:write`, `pull_requests:read` | Consumer repos |
 
-### Verifier App (trusted verifier repo)
-Permissions: `contents:read`, `checks:write`, `pull_requests:read`, `metadata:read`
-Install on: `factory-reference-billing-api`, `factory-reference-notification-api`
+After install, set branch protection on consumer repos: add `factory-contract/acceptance` as a required check and **restrict its source to the Verifier App identity**.
 
-After both Apps are installed and the verifier has posted its first check:
-
-1. Go to repo Settings → Branches → edit main branch protection
-2. Under Required status checks → add `factory-contract/acceptance`
-3. Under **Require status from**, select the **Verifier App** (not the producer App and not GitHub Actions)
-
-This is the enforcement that prevents the producer from forging the acceptance verdict.
+See [`infra/github/`](infra/github/README.md) for setup scripts.
 
 ---
 
-## Configuration Reference
+## Evolving the Factory
 
-| Variable | Required | Description |
-|---|---|---|
-| `PORT_CLIENT_ID` | Yes | Port machine account client ID |
-| `PORT_CLIENT_SECRET` | Yes | Port machine account client secret |
-| `PORT_BASE_URL` | No | Defaults to `https://api.getport.io` |
-| `ANTHROPIC_API_KEY` | Yes | Anthropic API key for Claude executor |
-| `DATABASE_URL` | Yes | PostgreSQL connection string |
-| `GITHUB_APP_ID` | For PR stage | Producer GitHub App ID |
-| `GITHUB_APP_PRIVATE_KEY_PATH` | For PR stage | Path to App private key (filesystem, not env) |
-| `GITHUB_APP_INSTALLATION_ID` | For PR stage | Installation ID |
-| `GITHUB_APP_WEBHOOK_SECRET` | For PR stage | Webhook HMAC secret |
-| `OPENSANDBOX_URL` | CI/hardened | OpenSandbox service URL |
-| `OPENSANDBOX_API_KEY` | CI/hardened | OpenSandbox API key |
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/s39-two-release-decisions-dark.png">
+  <img src="docs/diagrams/s39-two-release-decisions-light.png" alt="Two release decisions kept independent" width="860">
+</picture>
 
-None of these values belong in a committed file. Use `.env` locally (in `.gitignore`) and GitHub Actions secrets in CI.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/s44-factory-economics-dark.png">
+  <img src="docs/diagrams/s44-factory-economics-light.png" alt="Measure the factory as a production system" width="860">
+</picture>
 
----
-
-## Factory Release Model Assignments
-
-**Release 1.4.0 (ACTIVE)** — per-stage model assignment, not a single model for all stages
-
-| Stage | Model | Why |
-|---|---|---|
-| `product-requirements` | `claude-sonnet-5-5` | Requirements: creative + structured; Sonnet's speed/intelligence balance |
-| `software-architecture` | `claude-opus-5-5` | ADRs + OpenAPI: deep reasoning over compatibility constraints |
-| `software-engineering` | `claude-opus-5-5` | Code generation + tests: long-horizon, full context window needed |
-| `security-compliance` | `claude-sonnet-5-5` | Policy matching + structured evidence; Sonnet is sufficient |
-| `platform-operations` | `claude-haiku-5-5` | Health checks, deployment plans; fast structured output |
-
-Typical cost: ~$2.00–$2.80 per full 5-stage run. See [docs/models.md](docs/models.md) for the full model selection guide and cost breakdown.
-
-**Release 1.5.0 (CANDIDATE)** — Option B: only two stage overrides in `stageModels`:
-```yaml
-stageModels:
-  software-architecture: claude-fable-5-2   # adaptive thinking for ADR quality
-  software-engineering: claude-fable-5-2    # agentic coding for fewer rework cycles
-# all other stages fall back to defaultModel: claude-opus-5-5
-```
-
-See [docs/models.md](docs/models.md) for the full model selection guide.
-
----
-
-## Live Demo Evidence
-
-Factory releases are the unit of change for the production system itself.
-
-```bash
-# 1. Edit factory-releases/1.5.0/factory-release.yaml
-#    Change: defaultModel, stageModels, sandbox imageDigest, skill version
-
-# 2. Run evaluation
-pnpm factory evaluation:run --base 1.4.0 --candidate 1.5.0
-pnpm factory evaluation:report --comparison <id>
-
-# 3. Review evaluation results in Port (PromotionDecision entity)
-
-# 4. Promote (requires all hard gates passed)
-pnpm factory promote --candidate 1.5.0 --decision <id>
-
-# 5. factory-releases/active.yaml is updated — commit it
-git add factory-releases/active.yaml
-git commit -m "chore: promote factory release 1.5.0 [decision: <id>]"
-```
-
-A candidate that introduces a compatibility regression fails `HG-001` and cannot be promoted regardless of other scores.
+Measure accepted work-order throughput, lead time, rework rate, and cost per accepted change — not token consumption or lines of code generated.
 
 ---
 
 ## Adopter Guide
 
-Using this factory for a **different repository** (not the reference billing or notification API):
+Using this factory for a **different repository**:
 
-1. Add `.factory/repository-contract.yaml` to your repo following the [RepositoryContract schema](contracts/schemas/repository-contract.schema.json)
+1. Add `.factory/repository-contract.yaml` (see `contracts/schemas/repository-contract.schema.json`)
 2. Add `.factory/work-orders/your-feature.yaml` for each work order
-3. Add `AGENTS.md` to your repo root with factual workspace instructions (build commands, path boundaries, do-not-modify areas)
-4. Install the Producer GitHub App and configure branch protection with the Verifier App's `factory-contract/acceptance` check
+3. Add `AGENTS.md` with factual workspace instructions (build commands, path boundaries, do-not-modify areas)
+4. Install both GitHub Apps and configure branch protection with the verifier's `factory-contract/acceptance` check
 5. Create a `service` entity in Port pointing to your repo
 
-You do **not** copy any orchestration code into your repo. The factory runs against it remotely using the GitHub App to read code and open PRs.
+You do **not** copy any orchestration code. The factory runs against your repo remotely.
 
 ---
 
-## Operating Profiles
+## What this proves
 
-| Profile | Use | Key difference |
-|---|---|---|
-| `local-dev` | Development and learning | Local temp dirs instead of OpenSandbox, local PostgreSQL |
-| `ci-integration` | GitHub Actions runs | OpenSandbox required; ephemeral credentials; no production deployment |
-| `hardened` | Shared/production | Dedicated worker identity, egress restrictions, audit retention, backups |
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/s48-seven-proofs-dark.png">
+  <img src="docs/diagrams/s48-seven-proofs-light.png" alt="Three promises, seven proofs" width="860">
+</picture>
 
 ---
 
 ## Security
 
-Responsible disclosure: see [SECURITY.md](SECURITY.md).
-
-Key properties:
-- No credential ever enters a committed file, PR, or agent prompt
+- No credential enters any committed file, PR, or agent prompt
 - The trusted verifier runs in a separate repo under separate ownership
-- Each stage's acceptance is set by the verifier or an authorized human — never by the stage executor
-- `factory-releases/active.yaml` can only be modified by `pnpm factory promote` after a valid `PromotionDecision`
+- Each stage's acceptance is set by the verifier or an authorised human — never by the stage executor
+- `factory-releases/active.yaml` is updated only via `pnpm factory promote` after a valid `PromotionDecision`
+
+See [SECURITY.md](SECURITY.md).
 
 ---
 
@@ -484,6 +325,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
-
-The factory contract, schemas, skill procedures, and coordinator logic are open source. Your own `WorkOrder` contents, `AGENTS.md`, and produced artifacts are yours.
+MIT — see [LICENSE](LICENSE). Your `WorkOrder` contents, `AGENTS.md`, and produced artifacts are yours.

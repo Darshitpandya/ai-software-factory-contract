@@ -6,6 +6,15 @@ Port control plane definitions — blueprints, page layouts, and the restore scr
 
 ---
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../docs/diagrams/s13-blueprint-dark.gif">
+  <img src="../../docs/diagrams/s13-blueprint-light.gif" alt="Blueprint: the contract is every boundary crossing" width="840">
+</picture>
+
+> **Note:** This diagram shows GitHub Actions as the trigger. In this reference implementation the coordinator runs on a workstation. GitHub Actions creates the work order record; the coordinator processes it. In production the coordinator is a deployed persistent service.
+
+---
+
 ## What is here
 
 | Path | What it is |
