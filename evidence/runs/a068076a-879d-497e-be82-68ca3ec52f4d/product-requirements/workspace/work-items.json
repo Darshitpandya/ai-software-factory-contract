@@ -1,0 +1,125 @@
+{
+  "workOrder": "wo-billing-invoice-export-001",
+  "runId": "a068076a-879d-497e-be82-68ca3ec52f4d",
+  "status": "PROPOSED",
+  "targetService": null,
+  "targetServiceNote": "WorkOrder targetService is empty; unresolved (D-1). No architecture choice is assumed.",
+  "validation": {
+    "verifier": "factories/product-requirements/scripts/verify-requirements.ts",
+    "result": "NOT_RUN_SUCCESSFULLY",
+    "note": "ERR_PNPM_RECURSIVE_EXEC_NO_PACKAGE: no package/verifier in workspace. Acceptance not claimed."
+  },
+  "blockingQuestions": [
+    {"id": "D-1", "question": "Which service hosts the export endpoint and who is its Port owner?", "owner": "billing-domain / Port catalog owner", "blocks": ["WI-001"]},
+    {"id": "D-2", "question": "Row/size limits and sync vs async model?", "owner": "product + service owner", "blocks": ["WI-006"]},
+    {"id": "D-3", "question": "Export permission/role name?", "owner": "product + security", "blocks": ["WI-003"]},
+    {"id": "D-4", "question": "Formula neutralization method, incl. legit negative numbers?", "owner": "security + product", "blocks": ["WI-004"]},
+    {"id": "D-5", "question": "Columns, formats, encoding?", "owner": "billing-domain", "blocks": ["WI-005"]},
+    {"id": "D-6", "question": "Is audit logging required?", "owner": "security/compliance", "blocks": ["WI-009"]},
+    {"id": "D-7", "question": "Endpoint path/version and filters?", "owner": "product + API owner", "blocks": ["WI-002"]}
+  ],
+  "workItems": [
+    {
+      "id": "WI-001",
+      "title": "Resolve target service, owner and API design baseline",
+      "type": "decision",
+      "requirements": ["REQ-007"],
+      "acceptanceCriteria": ["AC-007"],
+      "dependsOn": [],
+      "blockedBy": ["D-1", "D-7"]
+    },
+    {
+      "id": "WI-002",
+      "title": "Define export endpoint contract (additive API spec entry) and CSV response skeleton",
+      "type": "implementation",
+      "requirements": ["REQ-001", "REQ-007"],
+      "acceptanceCriteria": ["AC-001", "AC-007"],
+      "dependsOn": ["WI-001"],
+      "blockedBy": ["D-7"]
+    },
+    {
+      "id": "WI-003",
+      "title": "Tenant derivation from authenticated identity and export authorization",
+      "type": "implementation",
+      "requirements": ["REQ-002", "REQ-003"],
+      "acceptanceCriteria": ["AC-002", "AC-003"],
+      "dependsOn": ["WI-002"],
+      "blockedBy": ["D-3"]
+    },
+    {
+      "id": "WI-004",
+      "title": "CSV formula-injection sanitizer",
+      "type": "implementation",
+      "requirements": ["REQ-004"],
+      "acceptanceCriteria": ["AC-004"],
+      "dependsOn": ["WI-001"],
+      "blockedBy": ["D-4"]
+    },
+    {
+      "id": "WI-005",
+      "title": "RFC 4180 CSV serializer with fixed header and encoding",
+      "type": "implementation",
+      "requirements": ["REQ-005"],
+      "acceptanceCriteria": ["AC-005"],
+      "dependsOn": ["WI-002", "WI-004"],
+      "blockedBy": ["D-5"]
+    },
+    {
+      "id": "WI-006",
+      "title": "Export bounds enforcement and over-limit error",
+      "type": "implementation",
+      "requirements": ["REQ-006"],
+      "acceptanceCriteria": ["AC-006"],
+      "dependsOn": ["WI-003", "WI-005"],
+      "blockedBy": ["D-2"]
+    },
+    {
+      "id": "WI-007",
+      "title": "Error response handling with no cross-tenant leakage",
+      "type": "implementation",
+      "requirements": ["REQ-008"],
+      "acceptanceCriteria": ["AC-008"],
+      "dependsOn": ["WI-003", "WI-006"],
+      "blockedBy": []
+    },
+    {
+      "id": "WI-008",
+      "title": "API compatibility check and documentation",
+      "type": "verification",
+      "requirements": ["REQ-007"],
+      "acceptanceCriteria": ["AC-007"],
+      "dependsOn": ["WI-002"],
+      "blockedBy": []
+    },
+    {
+      "id": "WI-009",
+      "title": "Export audit logging (conditional on D-6)",
+      "type": "implementation",
+      "requirements": ["REQ-009"],
+      "acceptanceCriteria": ["AC-009"],
+      "dependsOn": ["WI-003"],
+      "blockedBy": ["D-6"]
+    },
+    {
+      "id": "WI-010",
+      "title": "End-to-end security test suite (tenant isolation, authz, formula injection)",
+      "type": "verification",
+      "requirements": ["REQ-002", "REQ-003", "REQ-004"],
+      "acceptanceCriteria": ["AC-002", "AC-003", "AC-004"],
+      "dependsOn": ["WI-003", "WI-004", "WI-005"],
+      "blockedBy": []
+    }
+  ],
+  "requirementCoverage": {
+    "REQ-001": ["WI-002"],
+    "REQ-002": ["WI-003", "WI-010"],
+    "REQ-003": ["WI-003", "WI-010"],
+    "REQ-004": ["WI-004", "WI-010"],
+    "REQ-005": ["WI-005"],
+    "REQ-006": ["WI-006"],
+    "REQ-007": ["WI-001", "WI-002", "WI-008"],
+    "REQ-008": ["WI-007"],
+    "REQ-009": ["WI-009"]
+  },
+  "exclusions": []
+}

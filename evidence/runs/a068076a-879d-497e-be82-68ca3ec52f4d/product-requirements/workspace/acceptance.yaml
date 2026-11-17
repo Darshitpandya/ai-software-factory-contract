@@ -1,0 +1,113 @@
+# Acceptance criteria — proposal only (PRODUCED, not ACCEPTED)
+workOrder: wo-billing-invoice-export-001
+runId: a068076a-879d-497e-be82-68ca3ec52f4d
+specRevision: product-spec.md (unversioned draft; digest not available in workspace)
+status: PROPOSED
+validation:
+  verifier: factories/product-requirements/scripts/verify-requirements.ts
+  result: NOT_RUN_SUCCESSFULLY
+  note: >
+    Invocation failed with ERR_PNPM_RECURSIVE_EXEC_NO_PACKAGE (no package in workspace).
+    No verifier exit code for the artifacts exists; acceptance is not claimed.
+openDecisions:
+  - id: D-1
+    text: targetService is empty in WorkOrder; service and owner unresolved
+    blocking: true
+  - {id: D-2, text: "Row/size limits and sync vs async"}
+  - {id: D-3, text: "Export permission name"}
+  - {id: D-4, text: "Formula neutralization method, incl. negative numerics"}
+  - {id: D-5, text: "Columns, formats, encoding"}
+  - {id: D-6, text: "Audit logging requirement"}
+  - {id: D-7, text: "Filters, endpoint path/version"}
+  - {id: D-8, text: "Current behavior"}
+criteria:
+  - id: AC-001
+    requirement: REQ-001
+    name: CSV export returned
+    success: Authenticated authorized request returns 200 with Content-Type text/csv and a header row.
+    failure: Response is non-CSV, lacks header, or is not 200 for a valid request.
+    verifier: api-integration-test (TBD path; to be defined in implementation)
+    expectedArtifact: test-report/export-basic.xml
+  - id: AC-002
+    requirement: REQ-002
+    name: Tenant isolation
+    success: With invoices seeded for tenants A and B, a tenant A caller receives only tenant A rows.
+    failure: Any tenant B row appears; or supplying tenant B id via query/header/body changes the result set.
+    verifier: api-integration-test-multi-tenant
+    expectedArtifact: test-report/export-tenant-isolation.xml
+    counterexamples:
+      - Caller A passes tenantId=B as a parameter and receives B data (must fail)
+  - id: AC-003
+    requirement: REQ-003
+    name: Authorization enforced
+    success: No credentials yields 401; credentials without export permission yield 403; neither leaks data.
+    failure: Either request returns 200 or any invoice data.
+    verifier: api-integration-test-authz
+    expectedArtifact: test-report/export-authz.xml
+    humanDecision: D-3
+  - id: AC-004
+    requirement: REQ-004
+    name: Formula injection neutralized
+    success: >
+      For invoice text fields starting with =, +, -, @, TAB or CR (e.g. "=HYPERLINK(...)", "@SUM(A1)"),
+      the exported cell is neutralized so it is not interpreted as a formula.
+    failure: Any cell in the output begins with a formula trigger character un-neutralized.
+    verifier: unit-test-csv-sanitizer plus integration-test
+    expectedArtifact: test-report/export-formula-injection.xml
+    humanDecision: D-4
+    counterexamples:
+      - 'Field value "=1+1" appears verbatim as a leading character in the CSV cell'
+      - 'Payload hidden in a quoted field or after a newline-embedded value is not sanitized'
+  - id: AC-005
+    requirement: REQ-005
+    name: CSV formatting valid
+    success: >
+      Output parses with an RFC 4180 parser and round-trips; fields with commas, quotes and newlines are quoted
+      and quotes doubled; column order matches the documented header.
+    failure: Parser error, column shift, or undoubled quotes.
+    verifier: unit-test-csv-format
+    expectedArtifact: test-report/export-format.xml
+    humanDecision: D-5
+  - id: AC-006
+    requirement: REQ-006
+    name: Export bounds enforced
+    success: A request within the limit succeeds; a request exceeding it fails with the defined error and no partial silent truncation.
+    failure: Over-limit request returns 200 with truncated data, or times out or exhausts memory.
+    verifier: api-integration-test-bounds
+    expectedArtifact: test-report/export-bounds.xml
+    humanDecision: D-2
+  - id: AC-007
+    requirement: REQ-007
+    name: API backward compatibility
+    success: Existing endpoints and schemas are unchanged; the API spec diff is additive only; existing contract tests pass.
+    failure: Any removed or changed existing operation, field or status code; missing API spec entry for the new endpoint.
+    verifier: api-compat-check (TBD; depends on D-1 service)
+    expectedArtifact: test-report/api-compat.json
+  - id: AC-008
+    requirement: REQ-008
+    name: Error paths defined
+    success: Invalid params return 400; over-limit returns the defined 4xx; server error returns 5xx; no body includes another tenant's data.
+    failure: Stack traces or cross-tenant data in errors, or wrong status codes.
+    verifier: api-integration-test-errors
+    expectedArtifact: test-report/export-errors.xml
+  - id: AC-009
+    requirement: REQ-009
+    name: Audit logging
+    success: Each export emits a log or audit event with tenant, actor and outcome, and no invoice contents.
+    failure: Missing event, or invoice data in logs.
+    verifier: integration-test-audit-log
+    expectedArtifact: test-report/export-audit.xml
+    humanDecision: D-6
+traceability:
+  REQ-001: [AC-001]
+  REQ-002: [AC-002]
+  REQ-003: [AC-003]
+  REQ-004: [AC-004]
+  REQ-005: [AC-005]
+  REQ-006: [AC-006]
+  REQ-007: [AC-007]
+  REQ-008: [AC-008]
+  REQ-009: [AC-009]
+notes:
+  - Verifier names above are proposed test categories, not confirmed existing tools. They must be bound to real verifiers once the target service is known (D-1).
+  - No approval or acceptance is asserted.

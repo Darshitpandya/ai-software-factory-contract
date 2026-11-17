@@ -31,10 +31,8 @@ All three must pass before performance metrics are compared.
 - Maximum regression vs base: 5%
 - All hard gates must pass
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../docs/diagrams/s42-promotion-policy-dark.png">
-  <img src="../docs/diagrams/s42-promotion-policy-light.png" alt="Promotion policy" width="840">
-</picture>
+<img src="../docs/diagrams/s42-promotion-policy-light.png#gh-light-mode-only" alt="Promotion policy" width="840">
+<img src="../docs/diagrams/s42-promotion-policy-dark.png#gh-dark-mode-only" alt="Promotion policy" width="840">
 
 ## Structure
 

@@ -1,0 +1,12 @@
+{
+  "id": "wo-billing-invoice-export-001",
+  "title": "Tenant-Scoped Invoice Export",
+  "scope": "Add tenant-scoped CSV invoice export endpoint with formula injection protection",
+  "requestedBy": "billing-domain",
+  "releaseVersion": "1.4.0",
+  "targetService": "",
+  "status": "RUNNING",
+  "runId": "a068076a-879d-497e-be82-68ca3ec52f4d",
+  "factoryRelease": "1.4.0",
+  "stage": "product-requirements"
+}

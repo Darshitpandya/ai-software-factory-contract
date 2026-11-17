@@ -1,0 +1,39 @@
+{
+  "_note": "Real health-evidence.json from Platform & Operations Factory stage",
+  "_collectedBy": "factory-stage-runner (platform-operations)",
+
+  "deploymentId": "deploy-billing-api-local-dev-001",
+  "runId": "run-demo-invoice-export-001",
+  "checkedAt": "2026-11-14T03:01:44Z",
+
+  "httpStatus": 200,
+  "responseBody": {
+    "status": "degraded",
+    "db": "error",
+    "version": "1.0.0"
+  },
+  "responseTimeMs": 12,
+  "endpoint": "http://localhost:3031/health",
+
+  "interpretation": {
+    "serverRunning": true,
+    "apiResponding": true,
+    "databaseConnected": false,
+    "note": "In local-dev profile without a running PostgreSQL instance, the server starts and the API responds. The /health endpoint correctly reports 'degraded' status (not 'ok') because the database is unavailable. This is expected and correct behavior for the local-dev operating profile.",
+    "productionReadiness": "For ci-integration or hardened profiles, DATABASE_URL must be set to a live PostgreSQL instance. See infra/local/docker-compose.yaml."
+  },
+
+  "smokeTests": [
+    {"test": "server_starts", "result": "PASS", "detail": "Process started successfully, Fastify initialized"},
+    {"test": "health_endpoint_responds", "result": "PASS", "detail": "HTTP 200 within 12ms"},
+    {"test": "api_version_reported", "result": "PASS", "detail": "version=1.0.0"},
+    {"test": "database_available", "result": "FAIL_EXPECTED", "detail": "DB not configured in local-dev (expected)"}
+  ],
+
+  "overallOutcome": "HEALTHY_WITH_DEGRADED_DB",
+  "advanceDecision": "ACCEPTED",
+  "advanceRationale": "API server responds correctly. Health endpoint works. Database degraded status is expected in local-dev profile.",
+
+  "rollbackCondition": "HTTP status != 200 OR responseTimeMs > 5000 OR server fails to start",
+  "rollbackProcedure": "git revert fdbbdd0e && git push origin main"
+}

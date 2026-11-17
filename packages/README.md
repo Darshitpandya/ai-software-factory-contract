@@ -6,10 +6,8 @@ The factory runtime — independently testable TypeScript packages.
 
 ---
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../docs/diagrams/s11-factoryrun-hierarchy-dark.png">
-  <img src="../docs/diagrams/s11-factoryrun-hierarchy-light.png" alt="FactoryRun accountability hierarchy" width="840">
-</picture>
+<img src="../docs/diagrams/s11-factoryrun-hierarchy-light.png#gh-light-mode-only" alt="FactoryRun accountability hierarchy" width="840">
+<img src="../docs/diagrams/s11-factoryrun-hierarchy-dark.png#gh-dark-mode-only" alt="FactoryRun accountability hierarchy" width="840">
 
 ---
 

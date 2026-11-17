@@ -1,0 +1,28 @@
+{
+  "id": "41fc6a80-20d8-4d09-b958-32d6cfe5a558",
+  "runId": "a068076a-879d-497e-be82-68ca3ec52f4d",
+  "stage": "software-architecture",
+  "producedAt": "2026-11-14T10:26:36.152Z",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "92985fb74b72cba93042e0a4067a99df59105371d16da5e9c848ad7bb85202da",
+      "sizeBytes": 327,
+      "mimeType": "text/markdown"
+    },
+    {
+      "path": "work-order.json",
+      "sha256": "21844df8b7c57432c63eb6d2a2649aacd6c162208bef8ce730fbb762a80ffc34",
+      "sizeBytes": 406,
+      "mimeType": "application/json"
+    }
+  ],
+  "sha256": "51f67ed44c8ab25187befee9c527a5dc67167dd124335c85094277314f94c545",
+  "producerStatus": "PRODUCED",
+  "modelUsed": "claude-opus-5-5",
+  "factoryRelease": "1.4.0",
+  "tokenUsage": {
+    "inputTokens": 14644,
+    "outputTokens": 8542
+  }
+}

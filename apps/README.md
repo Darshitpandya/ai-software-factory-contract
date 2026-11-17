@@ -6,10 +6,8 @@ The coordinator worker and the CLI.
 
 ---
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../docs/diagrams/s18-execution-lifecycle-dark.gif">
-  <img src="../docs/diagrams/s18-execution-lifecycle-light.gif" alt="Execution lifecycle" width="840">
-</picture>
+<img src="../docs/diagrams/s18-execution-lifecycle-light.gif#gh-light-mode-only" alt="Execution lifecycle" width="840">
+<img src="../docs/diagrams/s18-execution-lifecycle-dark.gif#gh-dark-mode-only" alt="Execution lifecycle" width="840">
 
 > **Note:** This diagram shows GitHub Actions as the trigger and the coordinator as the execution engine. In this reference implementation the coordinator runs on a workstation (`nohup tsx apps/factory-coordinator/src/index.ts &`). GitHub Actions creates the work order record; the coordinator processes it. In production the coordinator is a deployed persistent service.
 

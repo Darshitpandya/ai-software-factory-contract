@@ -17,17 +17,13 @@ A production-oriented engineering factory: a `WorkOrder` moves through five spec
 
 ## What this is
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/s07-two-release-contracts-dark.png">
-  <img src="docs/diagrams/s07-two-release-contracts-light.png" alt="Two release contracts" width="860">
-</picture>
+<img src="docs/diagrams/s07-two-release-contracts-light.png#gh-light-mode-only" alt="Two release contracts" width="860">
+<img src="docs/diagrams/s07-two-release-contracts-dark.png#gh-dark-mode-only" alt="Two release contracts" width="860">
 
 Two independent contracts govern the system. Contract One controls what the factory produces — engineering changes, artifacts, PRs. Contract Two controls the factory itself — model selection, skill versions, evaluation, promotion. Neither contract can satisfy the other's acceptance requirements.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/s19-five-interfaces-dark.png">
-  <img src="docs/diagrams/s19-five-interfaces-light.png" alt="Five Factory Contract interfaces" width="860">
-</picture>
+<img src="docs/diagrams/s19-five-interfaces-light.png#gh-light-mode-only" alt="Five Factory Contract interfaces" width="860">
+<img src="docs/diagrams/s19-five-interfaces-dark.png#gh-dark-mode-only" alt="Five Factory Contract interfaces" width="860">
 
 Five interfaces define the boundary at every handoff: **WorkOrder**, **Artifact & Handoff**, **Execution**, **Acceptance & Evidence**, **FactoryRelease**. A contract is not a prompt. It is an executable agreement among a producer, a consumer, and the systems authorised to decide.
 
@@ -35,27 +31,19 @@ Five interfaces define the boundary at every handoff: **WorkOrder**, **Artifact 
 
 ## Architecture
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/s09-five-factories-pipeline-dark.png">
-  <img src="docs/diagrams/s09-five-factories-pipeline-light.png" alt="Five factories, one production value stream" width="860">
-</picture>
+<img src="docs/diagrams/s09-five-factories-pipeline-light.png#gh-light-mode-only" alt="Five factories, one production value stream" width="860">
+<img src="docs/diagrams/s09-five-factories-pipeline-dark.png#gh-dark-mode-only" alt="Five factories, one production value stream" width="860">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/s14-three-authorities-dark.png">
-  <img src="docs/diagrams/s14-three-authorities-light.png" alt="Control, execution and acceptance are separate authorities" width="860">
-</picture>
+<img src="docs/diagrams/s14-three-authorities-light.png#gh-light-mode-only" alt="Control, execution and acceptance are separate authorities" width="860">
+<img src="docs/diagrams/s14-three-authorities-dark.png#gh-dark-mode-only" alt="Control, execution and acceptance are separate authorities" width="860">
 
 Port does not replace GitHub merge rules. An agent does not set its own acceptance criteria. A local test is not an authoritative repository check. In this reference implementation the coordinator runs on a workstation; in production it is a deployed service.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/s15-tool-ecosystem-dark.png">
-  <img src="docs/diagrams/s15-tool-ecosystem-light.png" alt="Existing tools, clear responsibilities" width="860">
-</picture>
+<img src="docs/diagrams/s15-tool-ecosystem-light.png#gh-light-mode-only" alt="Existing tools, clear responsibilities" width="860">
+<img src="docs/diagrams/s15-tool-ecosystem-dark.png#gh-dark-mode-only" alt="Existing tools, clear responsibilities" width="860">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/s11-factoryrun-hierarchy-dark.png">
-  <img src="docs/diagrams/s11-factoryrun-hierarchy-light.png" alt="FactoryRun accountability hierarchy" width="860">
-</picture>
+<img src="docs/diagrams/s11-factoryrun-hierarchy-light.png#gh-light-mode-only" alt="FactoryRun accountability hierarchy" width="860">
+<img src="docs/diagrams/s11-factoryrun-hierarchy-dark.png#gh-dark-mode-only" alt="FactoryRun accountability hierarchy" width="860">
 
 A producing stage cannot unilaterally certify its own downstream readiness. Every object links to a FactoryRun, a FactoryRelease, a target repository, and the relevant acceptance record.
 
@@ -94,10 +82,8 @@ factory-releases/
 
 ## The Four Repositories
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/s46-reuse-across-repositories-dark.png">
-  <img src="docs/diagrams/s46-reuse-across-repositories-light.png" alt="One factory release, two repository contracts" width="860">
-</picture>
+<img src="docs/diagrams/s46-reuse-across-repositories-light.png#gh-light-mode-only" alt="One factory release, two repository contracts" width="860">
+<img src="docs/diagrams/s46-reuse-across-repositories-dark.png#gh-dark-mode-only" alt="One factory release, two repository contracts" width="860">
 
 | Repo | Role |
 |------|------|
@@ -269,15 +255,11 @@ See [`infra/github/`](infra/github/README.md) for setup scripts.
 
 ## Evolving the Factory
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/s39-two-release-decisions-dark.png">
-  <img src="docs/diagrams/s39-two-release-decisions-light.png" alt="Two release decisions kept independent" width="860">
-</picture>
+<img src="docs/diagrams/s39-two-release-decisions-light.png#gh-light-mode-only" alt="Two release decisions kept independent" width="860">
+<img src="docs/diagrams/s39-two-release-decisions-dark.png#gh-dark-mode-only" alt="Two release decisions kept independent" width="860">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/s44-factory-economics-dark.png">
-  <img src="docs/diagrams/s44-factory-economics-light.png" alt="Measure the factory as a production system" width="860">
-</picture>
+<img src="docs/diagrams/s44-factory-economics-light.png#gh-light-mode-only" alt="Measure the factory as a production system" width="860">
+<img src="docs/diagrams/s44-factory-economics-dark.png#gh-dark-mode-only" alt="Measure the factory as a production system" width="860">
 
 Measure accepted work-order throughput, lead time, rework rate, and cost per accepted change — not token consumption or lines of code generated.
 
@@ -299,10 +281,8 @@ You do **not** copy any orchestration code. The factory runs against your repo r
 
 ## What this proves
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/s48-seven-proofs-dark.png">
-  <img src="docs/diagrams/s48-seven-proofs-light.png" alt="Three promises, seven proofs" width="860">
-</picture>
+<img src="docs/diagrams/s48-seven-proofs-light.png#gh-light-mode-only" alt="Three promises, seven proofs" width="860">
+<img src="docs/diagrams/s48-seven-proofs-dark.png#gh-dark-mode-only" alt="Three promises, seven proofs" width="860">
 
 ---
 

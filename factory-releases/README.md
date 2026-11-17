@@ -6,10 +6,8 @@ Versioned factory configurations. Each release pins the models, skills, sandbox 
 
 ---
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../docs/diagrams/s39-two-release-decisions-dark.png">
-  <img src="../docs/diagrams/s39-two-release-decisions-light.png" alt="Two release decisions, kept independent" width="840">
-</picture>
+<img src="../docs/diagrams/s39-two-release-decisions-light.png#gh-light-mode-only" alt="Two release decisions, kept independent" width="840">
+<img src="../docs/diagrams/s39-two-release-decisions-dark.png#gh-dark-mode-only" alt="Two release decisions, kept independent" width="840">
 
 ---
 
@@ -54,10 +52,8 @@ Any direct edit without a `PromotionDecision` is a policy violation.
 
 ## Promotion policy
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../docs/diagrams/s42-promotion-policy-dark.png">
-  <img src="../docs/diagrams/s42-promotion-policy-light.png" alt="Promotion earns a controlled rollout, not permanent trust" width="840">
-</picture>
+<img src="../docs/diagrams/s42-promotion-policy-light.png#gh-light-mode-only" alt="Promotion earns a controlled rollout, not permanent trust" width="840">
+<img src="../docs/diagrams/s42-promotion-policy-dark.png#gh-dark-mode-only" alt="Promotion earns a controlled rollout, not permanent trust" width="840">
 
 A candidate that passes evaluation has earned eligibility for controlled deployment. It has not proved that every future factory run will be correct.
 

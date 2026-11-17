@@ -6,10 +6,8 @@ One directory per production stage. Each contains working instructions, skill pr
 
 ---
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../docs/diagrams/s23-five-questions-dark.png">
-  <img src="../docs/diagrams/s23-five-questions-light.png" alt="One work order, five questions for every factory" width="840">
-</picture>
+<img src="../docs/diagrams/s23-five-questions-light.png#gh-light-mode-only" alt="One work order, five questions for every factory" width="840">
+<img src="../docs/diagrams/s23-five-questions-dark.png#gh-dark-mode-only" alt="One work order, five questions for every factory" width="840">
 
 ---
 

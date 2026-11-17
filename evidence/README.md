@@ -6,10 +6,8 @@ Real artifacts from live factory runs. Every file was written by Claude during a
 
 ---
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../docs/diagrams/s31-evidence-trace-dark.png">
-  <img src="../docs/diagrams/s31-evidence-trace-light.png" alt="FactoryRun reassembles the whole journey" width="840">
-</picture>
+<img src="../docs/diagrams/s31-evidence-trace-light.png#gh-light-mode-only" alt="FactoryRun reassembles the whole journey" width="840">
+<img src="../docs/diagrams/s31-evidence-trace-dark.png#gh-dark-mode-only" alt="FactoryRun reassembles the whole journey" width="840">
 
 ---
 

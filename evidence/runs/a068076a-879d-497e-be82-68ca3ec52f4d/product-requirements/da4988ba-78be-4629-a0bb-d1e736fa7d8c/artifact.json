@@ -1,0 +1,46 @@
+{
+  "id": "da4988ba-78be-4629-a0bb-d1e736fa7d8c",
+  "runId": "a068076a-879d-497e-be82-68ca3ec52f4d",
+  "stage": "product-requirements",
+  "producedAt": "2026-11-14T10:17:33.296Z",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "a660981ad205245918dd562c9192d53669c36d44398d48a93c09ce062911488b",
+      "sizeBytes": 326,
+      "mimeType": "text/markdown"
+    },
+    {
+      "path": "acceptance.yaml",
+      "sha256": "0ef11eeb6cc4ef771957980bb52d349231e35c9ae0e0faadf2d128b89df8beaf",
+      "sizeBytes": 5438,
+      "mimeType": "application/yaml"
+    },
+    {
+      "path": "product-spec.md",
+      "sha256": "2166c083ecba52661f150293474c5686c1d009690512b229dbc8a83edc4b6b4e",
+      "sizeBytes": 6501,
+      "mimeType": "text/markdown"
+    },
+    {
+      "path": "work-items.json",
+      "sha256": "e03ec5f898351183e99a69632fc43239a10156c8f1835363a9920b5927d61d9c",
+      "sizeBytes": 4669,
+      "mimeType": "application/json"
+    },
+    {
+      "path": "work-order.json",
+      "sha256": "152ea7ed3ab7690dd129a491871911c4b7dab076eb71717f3d9f41be053535b4",
+      "sizeBytes": 405,
+      "mimeType": "application/json"
+    }
+  ],
+  "sha256": "4b82af9b691d46921172e4e8bd50ebe02cccad569fe9f09734b8aacf957f44f7",
+  "producerStatus": "PRODUCED",
+  "modelUsed": "claude-sonnet-5-5",
+  "factoryRelease": "1.4.0",
+  "tokenUsage": {
+    "inputTokens": 27068,
+    "outputTokens": 8212
+  }
+}

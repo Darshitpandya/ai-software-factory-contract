@@ -1,0 +1,40 @@
+{
+  "_note": "Real deployment.json produced by Platform & Operations Factory stage",
+  "_deploymentType": "disposable-test/local-dev",
+  "_profile": "local-dev (sandbox-adapter local-docker mode)",
+
+  "deploymentId": "deploy-billing-api-local-dev-001",
+  "runId": "run-demo-invoice-export-001",
+  "service": "factory-reference-billing-api",
+  "factoryRelease": "1.4.0",
+  "commitSha": "fdbbdd0e1f11e9179a316a3f34aaf9695eab5313",
+  "deployedAt": "2026-11-14T03:01:44Z",
+
+  "environment": {
+    "type": "disposable-test",
+    "profile": "local-dev",
+    "host": "localhost",
+    "port": 3031,
+    "note": "Docker Compose or direct node --import tsx/esm src/server.ts"
+  },
+
+  "image": {
+    "name": "factory-reference-billing-api",
+    "dockerfile": "Dockerfile",
+    "note": "node:22-alpine base, pnpm installed, tsx executor"
+  },
+
+  "rollbackTarget": {
+    "type": "git-revert",
+    "targetSha": "c93d20e73638569e7aa37000f5d0eb63c3989013",
+    "command": "git revert fdbbdd0e && git push origin main",
+    "note": "Previous deployment would revert to billing API without /export route"
+  },
+
+  "status": "HEALTHY",
+  "healthEndpoint": "/health",
+  "healthCheckedAt": "2026-11-14T03:01:44Z",
+
+  "skills_used": ["release-assessment"],
+  "model_used": "claude-opus-5-5"
+}
