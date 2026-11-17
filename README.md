@@ -188,6 +188,8 @@ stageModels:
 
 Port is the control plane. Three steps for a fresh org:
 
+![Port control plane tour](docs/diagrams/port-control-plane-tour.gif)
+
 **1. Blueprints — Terraform**
 ```bash
 cd infra/terraform && cp terraform.tfvars.example terraform.tfvars
