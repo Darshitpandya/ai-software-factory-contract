@@ -7,7 +7,11 @@
 
 set -e
 
-OWNER="Darshitpandya"
+# Detect owner from the current repo context, or prompt
+OWNER=$(gh repo view --json owner -q .owner.login 2>/dev/null || true)
+if [ -z "$OWNER" ]; then
+  read -p "GitHub owner (username or org): " OWNER
+fi
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

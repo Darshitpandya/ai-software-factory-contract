@@ -1,19 +1,28 @@
+# Dependencies
 node_modules/
+
+# Build outputs
 dist/
+*.tsbuildinfo
+
+# Environment — never commit real credentials
 .env
 .env.local
 *.env
+
+# Package manager
 pnpm-lock.yaml.bak
+
+# Test coverage
 coverage/
 .cache/
-*.tsbuildinfo
-# Track specific evidence runs (real Claude artifacts) but not bulk output
-# evidence/runs/   ← removed: real artifacts should be in the repo for demo
-use_case_*_slide_dck.md
-TODO.md
-repos_run_iteration*_output_task.md
-platforms_tools_slides_info.md
-# Terraform state and local config (secrets)
+
+# Evidence — workspace context files are auto-seeded by the coordinator at runtime.
+# They contain no Claude-produced content; only the actual output files matter.
+evidence/runs/*/workspace/README.md
+evidence/runs/*/workspace/work-order.json
+
+# Terraform — state files and local variable overrides contain secrets
 infra/terraform/.terraform/
 infra/terraform/.terraform.lock.hcl
 infra/terraform/terraform.tfstate
@@ -21,8 +30,3 @@ infra/terraform/terraform.tfstate.backup
 infra/terraform/terraform.tfvars
 infra/terraform/tfplan*
 infra/terraform/terraform.tfvars.bak
-screenshot_capture_slide_wise_notes_steps.md
-doc_update_note_v003_deck_ss.md
-v005_ss_notes_change_15_nov.md
-v007_slide_evidence_collect.md
-v007-evidence-ss/
