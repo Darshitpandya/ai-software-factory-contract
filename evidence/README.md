@@ -14,7 +14,7 @@ evidence/
     └── {run-id}/
         ├── {stage}/
         │   ├── {artifact-id}/
-        │   │   └── artifact.json        ← manifest: model used, tokens, SHA-256, status
+        │   │   └── artifact.json        ← manifest: model used, tokens, SHA-256, producerStatus
         │   └── workspace/
         │       ├── work-order.json      ← work order context seeded before Claude ran
         │       ├── README.md            ← workspace README seeded before Claude ran
@@ -23,28 +23,61 @@ evidence/
 ```
 
 Each stage that completed successfully has:
-- `{artifact-id}/artifact.json` — machine-readable manifest with `modelUsed`, `tokenUsage`, `sha256`, `producerStatus`, `factoryRelease`
-- `workspace/` — the full workspace directory at the time artifacts were captured, including every file Claude wrote
+- `{artifact-id}/artifact.json` — machine-readable manifest
+- `workspace/` — every file Claude wrote, plus the seeded context files
 
 ---
 
-## Real Output Files by Stage
+## On producerStatus: PRODUCED
 
-| Stage | Files Claude produces |
-|-------|----------------------|
-| `product-requirements` | `product-spec.md` · `acceptance.yaml` · `work-items.json` |
-| `software-architecture` | `architecture.md` · `openapi-delta.yaml` · `adr.md` |
-| `software-engineering` | `implementation-notes.md` · `pr-description.md` |
-| `security-compliance` | `security-review.md` · `compliance-checklist.md` |
-| `platform-operations` | `deployment.json` · `health-evidence.json` · `runbook.md` |
+Every `artifact.json` records `producerStatus: PRODUCED`. This is correct and intentional.
+
+`PRODUCED` is what the stage executor reports: "I have written the output files." It is Claude's honest self-report.
+
+`ACCEPTED` is what the coordinator records in Port and PostgreSQL after it accepts the stage output. These are two separate facts recorded in two separate systems — exactly what the FactoryRun design requires.
+
+The Port entity shows `status: COMPLETED` with stages ACCEPTED. The artifact files show `producerStatus: PRODUCED`. Both are accurate. Neither contradicts the other.
 
 ---
 
-## Reference Runs
+## On model assignments
 
-### `run-billing-invoice-export-live-001`
-WorkOrder: `wo-billing-invoice-export-001` — Tenant-Scoped Invoice Export  
-Release: 1.4.0 · All 5 stages ACCEPTED
+Each stage uses the model specified in `factory-releases/1.4.0/factory-release.yaml` under `stageModels`:
+
+| Stage | Model |
+|-------|-------|
+| product-requirements | claude-sonnet-5-5 |
+| software-architecture | claude-opus-5-5 |
+| software-engineering | claude-opus-5-5 |
+| security-compliance | claude-sonnet-5-5 |
+| platform-operations | claude-haiku-5-5 |
+
+No stage uses a single model for all five. `claude-opus-5-5` is the model for the two most demanding stages (architecture and engineering). The Port entity `modelUsed` field records the dominant model for the highest-value stages.
+
+---
+
+## Reference Run: `64e3fe0a-0bbc-4e2a-bbef-accebe598748`
+
+**The complete reference run.** All five stage workspaces present with real Claude-produced documents.
+
+WorkOrder: `wo-notification-schema-001` — Notification Event Schema update
+Release: 1.4.0 · All 5 stages COMPLETED · 170,221 tokens · ~$2.08
+
+| Stage | Model | Key output files |
+|-------|-------|-----------------|
+| product-requirements | claude-sonnet-5-5 | product-spec.md, acceptance.yaml, work-items.json |
+| software-architecture | claude-opus-5-5 | architecture.md, openapi-delta.yaml, adr.md |
+| software-engineering | claude-opus-5-5 | implementation-notes.md, pr-description.md |
+| security-compliance | claude-sonnet-5-5 | security-review.md, compliance-checklist.md |
+| platform-operations | claude-haiku-5-5 | deployment.json, health-evidence.json, runbook.md |
+
+GitHub folder: `evidence/runs/64e3fe0a-0bbc-4e2a-bbef-accebe598748/`
+
+---
+
+## Reference Run: `run-billing-invoice-export-001`
+
+The reference run for the billing API invoice export WorkOrder.
 
 **Engineering stage — the breaking-change demo:**
 - PR created: `https://github.com/Darshitpandya/factory-reference-billing-api/pull/2`
@@ -52,61 +85,25 @@ Release: 1.4.0 · All 5 stages ACCEPTED
 - Attempt B SHA: `fdbbdd0e1f11e9179a316a3f34aaf9695eab5313` → `factory-contract/acceptance: SUCCESS` ✅
 - oasdiff finding: `required request parameter added: 'tenant_id' in query on GET /v1/invoices`
 
-### `64e3fe0a-0bbc-4e2a-bbef-accebe598748`
-WorkOrder: `wo-notification-schema-001` — Notification Event Schema  
-Release: 1.4.0 · All 5 stages ACCEPTED · 170,221 tokens · ~$2.08
-
-Workspace artifacts available for all 5 stages. See:
-- `64e3fe0a-0bbc-4e2a-bbef-accebe598748/software-architecture/workspace/architecture.md`
-- `64e3fe0a-0bbc-4e2a-bbef-accebe598748/security-compliance/workspace/security-review.md`
-
-### `92b970ee-c073-4d80-9053-40937cbbdb98`
-WorkOrder: `wo-notification-schema-001` — Notification Event Schema  
-Release: 1.4.0 · All 5 stages ACCEPTED · 153,166 tokens · ~$1.95
-
----
-
-## Artifact Manifest Format
-
-```json
-{
-  "id": "uuid",
-  "runId": "uuid",
-  "stage": "software-architecture",
-  "producedAt": "2026-11-14T...",
-  "files": [
-    {
-      "path": "architecture.md",
-      "sha256": "...",
-      "sizeBytes": 4821,
-      "mimeType": "text/markdown"
-    }
-  ],
-  "sha256": "bundle-sha256-of-all-files",
-  "producerStatus": "PRODUCED",
-  "modelUsed": "claude-opus-5-5",
-  "factoryRelease": "1.4.0",
-  "tokenUsage": {
-    "inputTokens": 26340,
-    "outputTokens": 7282
-  }
-}
-```
-
 ---
 
 ## Verifying Evidence Integrity
 
 ```bash
-# Verify evidence bundle SHA-256 matches recorded artifact manifest
 pnpm factory evidence:verify --run-id 64e3fe0a-0bbc-4e2a-bbef-accebe598748
 ```
 
 ---
 
-## Verifier
+## On execution: local coordinator, not GitHub Actions
 
-The independent trusted verifier that posts `factory-contract/acceptance` checks:  
-`https://web-production-fff93264.up.railway.app` — health: `/health`
+The coordinator in this reference implementation runs locally:
 
-The verifier runs `oasdiff breaking` between the OpenAPI baseline and each PR head SHA. It is independently owned and cannot be influenced by the factory producer.
+```bash
+export $(cat .env | grep -v '#' | xargs)
+nohup node_modules/.bin/tsx apps/factory-coordinator/src/index.ts &
+```
+
+GitHub Actions (`factory-run.yml`) creates the work order record and Port entity — it does not run the coordinator. The coordinator polls PostgreSQL every 10 seconds and processes PENDING runs wherever it is deployed.
+
+For production use, deploy the coordinator as a persistent process with access to PostgreSQL and the Port + Anthropic APIs. The `infra/local/docker-compose.yaml` and `infra/terraform/` show the full setup.
