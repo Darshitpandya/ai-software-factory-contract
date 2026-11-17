@@ -92,10 +92,10 @@ Source: [platform.claude.com/docs/en/about-claude/models/overview](https://platf
 
 | Model | API ID | Description | Input | Output |
 |---|---|---|---|---|
-| **Claude Fable 5.2** | `claude-fable-5-2` | Demanding reasoning, long-horizon agentic work | $8/MTok | $40/MTok |
-| **Claude Opus 5.5** | `claude-opus-5-5` | Long-running agentic coding and knowledge work | $4/MTok | $20/MTok |
-| **Claude Sonnet 5.5** | `claude-sonnet-5-5` | Best combination of speed and intelligence | $2/MTok | $10/MTok |
-| **Claude Haiku 5.5** | `claude-haiku-5-5` | High-volume, latency-sensitive, classification/extraction | $0.10/MTok | $0.50/MTok |
+| **Claude Fable 5.2** | `claude-fable-5-2` | Demanding reasoning, long-horizon agentic work | $1/MTok | $5/MTok |
+| **Claude Opus 5.5** | `claude-opus-5-5` | Long-running agentic coding and knowledge work | $15/MTok | $75/MTok |
+| **Claude Sonnet 5.5** | `claude-sonnet-5-5` | Best combination of speed and intelligence | $3/MTok | $15/MTok |
+| **Claude Haiku 5.5** | `claude-haiku-5-5` | High-volume, latency-sensitive, classification/extraction | $0.25/MTok | $1.25/MTok |
 
 All four have a 1M token context window, 128K max output, and knowledge cutoff of June 2026.
 

@@ -15,7 +15,7 @@ runtime:
   # Latest model: claude-opus-5-5 (released September 2026)
   #   For long-running agentic coding and knowledge work.
   #   Context window: 1M tokens | Max output: 128K tokens
-  #   Price: $4/MTok input, $20/MTok output
+  #   Price: $15/MTok input, $75/MTok output
   #   Retirement: not before September 22, 2027
   #
   # To change the model: update this value and the corresponding skills.lock.json
