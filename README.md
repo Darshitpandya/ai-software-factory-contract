@@ -11,6 +11,17 @@
 
 A production-oriented engineering factory: a `WorkOrder` moves through five specialised stages, each producing independently verified artifacts, until a trusted verifier the producer cannot control either accepts or blocks the final handoff.
 
+> [!IMPORTANT]
+> **Two operating terms coined here — FactoryRun and FactoryRelease**
+>
+> The engineering community has established the term *AI software factory*. This work proposes two precise operating terms that give the concept its governance structure.
+>
+> **FactoryRun** — the complete journey of one work order through the factory: its stages, attempts, artifacts, acceptance decisions, and evidence. *Answers: what happened?*
+>
+> **FactoryRelease** — the approved, versioned factory configuration that produced that run: models, skills, tools, permissions, workflow, and sandbox, all pinned. *Answers: which machinery produced it?*
+>
+> A green agent status answers neither question. Independent proof is required for both. — *[Darshit Pandya](https://www.platformpioneer.io), PortCon 2026*
+
 [Get started](#quick-start) · [Architecture](#architecture) · [Commands](#commands-reference) · [Port setup](#port-setup) · [Adopt this](#adopter-guide) · [Contributing](CONTRIBUTING.md) · [Models](docs/models.md)
 
 ---
@@ -29,19 +40,31 @@ Three AAIF projects are directly used in this factory. The [Agentic AI Foundatio
     </td>
     <td>
       <b>Model Context Protocol</b> &nbsp;·&nbsp; <a href="https://github.com/modelcontextprotocol">github.com/modelcontextprotocol</a><br/>
-      Every tool integration in this factory — Port context, GitHub operations, security scanners — is exposed through MCP interfaces. No raw HTTP calls from the execution context.
+      Every tool integration in this factory — Port context, GitHub operations, security scanners — goes through MCP. <code>tools.lock.json</code> pins the approved MCP server identities and tool names for each stage.
     </td>
   </tr>
   <tr>
     <td align="center">
       <a href="https://agents.md">
-        <img src="https://github.com/anthropics.png?size=64" width="64" height="64" alt="AGENTS.md"/>
+        <img src="https://github.com/agentsmd.png?size=64" width="64" height="64" alt="AGENTS.md"/>
         <br/><b>AGENTS.md</b>
       </a>
     </td>
     <td>
-      <b>AGENTS.md</b> &nbsp;·&nbsp; <a href="https://github.com/anthropics/agents.md">github.com/anthropics/agents.md</a><br/>
-      Each of the five factories ships a dedicated <code>AGENTS.md</code> file — build commands, path boundaries, conventions, do-not-modify areas — loaded into the execution context before every stage run.
+      <b>AGENTS.md</b> &nbsp;·&nbsp; <a href="https://github.com/agentsmd/agents.md">github.com/agentsmd/agents.md</a><br/>
+      Each of the five factories ships a dedicated <code>AGENTS.md</code> file — build commands, path boundaries, conventions, do-not-modify areas — loaded by the <code>claude-executor</code> package before every stage run.
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://agentskills.io">
+        <img src="https://github.com/agentskills.png?size=64" width="64" height="64" alt="Agent Skills"/>
+        <br/><b>Agent Skills</b>
+      </a>
+    </td>
+    <td>
+      <b>Agent Skills (SKILL.md)</b> &nbsp;·&nbsp; <a href="https://github.com/agentskills/agentskills">github.com/agentskills/agentskills</a><br/>
+      15 skills locked in <code>skills.lock.json</code>, 3 per factory stage. Each is a <code>SKILL.md</code> file teaching the agent one workflow: requirements analysis, ADR authoring, feature implementation, security review, incident triage, and more. Donated to AAIF by Anthropic on 22 October 2026.
     </td>
   </tr>
   <tr>
@@ -53,7 +76,7 @@ Three AAIF projects are directly used in this factory. The [Agentic AI Foundatio
     </td>
     <td>
       <b>OpenSandbox</b> &nbsp;·&nbsp; <a href="https://github.com/opensandbox-group/OpenSandbox">github.com/opensandbox-group/OpenSandbox</a><br/>
-      Isolated execution environment for every factory stage — resource, lifecycle, and network constraints enforced. AAIF proposed project (<a href="https://github.com/aaif/project-proposals/issues/26">#26</a>). The agent never touches the host; the sandbox owns the execution boundary.
+      Isolated execution environment for every factory stage. <code>sandbox-adapter</code> implements the <code>OpenSandboxClient</code>; <code>factory-release.yaml</code> pins the provider and image digest. AAIF project at <a href="https://aaif.io/projects/opensandbox">aaif.io/projects/opensandbox</a>.
     </td>
   </tr>
 </table>
@@ -70,7 +93,7 @@ All tools used in this reference implementation.
       <a href="https://www.getport.io">
         <img src="https://github.com/port-labs.png?size=56" width="56" height="56" alt="Port"/>
         <br/><b>Port</b>
-      </a><br/><sub>Control plane</sub>
+      </a><br/><sub>AI software factory<br/>control plane · Context lake</sub>
     </td>
     <td align="center" width="100">
       <a href="https://github.com">
@@ -79,16 +102,16 @@ All tools used in this reference implementation.
       </a><br/><sub>Workflows · CI/CD</sub>
     </td>
     <td align="center" width="100">
-      <a href="https://www.anthropic.com">
-        <img src="https://github.com/anthropics.png?size=56" width="56" height="56" alt="Anthropic"/>
+      <a href="https://claude.ai">
+        <img src="https://cdn.simpleicons.org/claude/CC785C" width="56" height="56" alt="Claude"/>
         <br/><b>Claude</b>
-      </a><br/><sub>AI execution</sub>
+      </a><br/><sub>AI execution engine</sub>
     </td>
     <td align="center" width="100">
       <a href="https://github.com/opensandbox-group/OpenSandbox">
         <img src="https://github.com/opensandbox-group.png?size=56" width="56" height="56" alt="OpenSandbox"/>
         <br/><b>OpenSandbox</b>
-      </a><br/><sub>Isolated runtime</sub>
+      </a><br/><sub>Isolated runtime · AAIF</sub>
     </td>
     <td align="center" width="100">
       <a href="https://modelcontextprotocol.io">
@@ -100,9 +123,15 @@ All tools used in this reference implementation.
   <tr>
     <td align="center">
       <a href="https://agents.md">
-        <img src="https://github.com/anthropics.png?size=56" width="56" height="56" alt="AGENTS.md"/>
+        <img src="https://github.com/agentsmd.png?size=56" width="56" height="56" alt="AGENTS.md"/>
         <br/><b>AGENTS.md</b>
       </a><br/><sub>Instructions · AAIF</sub>
+    </td>
+    <td align="center">
+      <a href="https://agentskills.io">
+        <img src="https://github.com/agentskills.png?size=56" width="56" height="56" alt="Agent Skills"/>
+        <br/><b>Agent Skills</b>
+      </a><br/><sub>SKILL.md · AAIF</sub>
     </td>
     <td align="center">
       <a href="https://www.postgresql.org">
@@ -122,7 +151,9 @@ All tools used in this reference implementation.
         <br/><b>TypeScript</b>
       </a><br/><sub>Packages · CLI</sub>
     </td>
-    <td align="center">
+  </tr>
+  <tr>
+    <td align="center" colspan="2">
       <a href="https://www.python.org">
         <img src="https://cdn.simpleicons.org/python/3776AB" width="56" height="56" alt="Python"/>
         <br/><b>Python</b>
