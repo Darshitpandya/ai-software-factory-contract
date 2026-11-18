@@ -12,7 +12,7 @@
 A production-oriented engineering factory: a `WorkOrder` moves through five specialised stages, each producing independently verified artifacts, until a trusted verifier the producer cannot control either accepts or blocks the final handoff.
 
 > [!IMPORTANT]
-> **Two operating terms coined here — FactoryRun and FactoryRelease**
+> **Two operating terms coined here by [Darshit Pandya](https://www.linkedin.com/in/darshitpandya/) — FactoryRun and FactoryRelease**
 >
 > The engineering community has established the term *AI software factory*. This work proposes two precise operating terms that give the concept its governance structure.
 >
@@ -20,7 +20,7 @@ A production-oriented engineering factory: a `WorkOrder` moves through five spec
 >
 > **FactoryRelease** — the approved, versioned factory configuration that produced that run: models, skills, tools, permissions, workflow, and sandbox, all pinned. *Answers: which machinery produced it?*
 >
-> A green agent status answers neither question. Independent proof is required for both. — *[Darshit Pandya](https://www.platformpioneer.io), PortCon 2026*
+> A green agent status answers neither question. Independent proof is required for both.
 
 [Get started](#quick-start) · [Architecture](#architecture) · [Commands](#commands-reference) · [Port setup](#port-setup) · [Adopt this](#adopter-guide) · [Contributing](CONTRIBUTING.md) · [Models](docs/models.md)
 
