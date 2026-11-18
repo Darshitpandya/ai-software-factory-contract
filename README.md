@@ -439,7 +439,7 @@ You do **not** copy any orchestration code. The factory runs against your repo r
 
 ## Security
 
-- No credential enters any committed file, PR, or agent prompt
+- Bring your own credentials — Port org, Anthropic API key, GitHub App private keys; none are provided or stored here
 - The trusted verifier runs in a separate repo under separate ownership
 - Each stage's acceptance is set by the verifier or an authorised human — never by the stage executor
 - `factory-releases/active.yaml` is updated only via `pnpm factory promote` after a valid `PromotionDecision`
