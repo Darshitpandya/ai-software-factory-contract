@@ -17,7 +17,7 @@ A production-oriented engineering factory: a `WorkOrder` moves through five spec
 
 ## Agentic AI Foundation (AAIF) Projects
 
-This factory is built on open standards stewarded by the [Agentic AI Foundation](https://aaif.io/) — a [Linux Foundation](https://www.linuxfoundation.org/) initiative co-founded by Anthropic, OpenAI, and Block.
+Three AAIF projects are directly used in this factory. The [Agentic AI Foundation](https://aaif.io/) is a [Linux Foundation](https://www.linuxfoundation.org/) initiative co-founded by Anthropic, OpenAI, and Block.
 
 <table>
   <tr>
@@ -46,30 +46,6 @@ This factory is built on open standards stewarded by the [Agentic AI Foundation]
   </tr>
   <tr>
     <td align="center">
-      <a href="https://goose-docs.ai">
-        <img src="https://github.com/aaif-goose.png?size=64" width="64" height="64" alt="Goose"/>
-        <br/><b>Goose</b>
-      </a>
-    </td>
-    <td>
-      <b>Goose</b> &nbsp;·&nbsp; <a href="https://github.com/aaif-goose/goose">github.com/aaif-goose/goose</a><br/>
-      Block's open-source AI agent, now under AAIF. Goose's AGENTS.md convention directly shaped how this factory structures per-stage instructions. The open-source counterpart to Claude-based execution here.
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <a href="https://agentgateway.dev">
-        <img src="https://github.com/agentgateway.png?size=64" width="64" height="64" alt="AgentGateway"/>
-        <br/><b>AgentGateway</b>
-      </a>
-    </td>
-    <td>
-      <b>AgentGateway</b> &nbsp;·&nbsp; <a href="https://github.com/agentgateway/agentgateway">github.com/agentgateway/agentgateway</a><br/>
-      Production reference for secure agent-to-tool communication — MCP gateway, LLM routing, auth, guardrails, and OpenTelemetry observability. The infrastructure layer a production deployment of this factory would adopt.
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
       <a href="https://github.com/opensandbox-group/OpenSandbox">
         <img src="https://github.com/opensandbox-group.png?size=64" width="64" height="64" alt="OpenSandbox"/>
         <br/><b>OpenSandbox</b>
@@ -86,7 +62,7 @@ This factory is built on open standards stewarded by the [Agentic AI Foundation]
 
 ## Technology Stack
 
-All tools used in the PortCon 2026 talk and in this reference implementation.
+All tools used in this reference implementation.
 
 <table>
   <tr>
@@ -129,18 +105,6 @@ All tools used in the PortCon 2026 talk and in this reference implementation.
       </a><br/><sub>Instructions · AAIF</sub>
     </td>
     <td align="center">
-      <a href="https://goose-docs.ai">
-        <img src="https://github.com/aaif-goose.png?size=56" width="56" height="56" alt="Goose"/>
-        <br/><b>Goose</b>
-      </a><br/><sub>Agent ref · AAIF</sub>
-    </td>
-    <td align="center">
-      <a href="https://agentgateway.dev">
-        <img src="https://github.com/agentgateway.png?size=56" width="56" height="56" alt="AgentGateway"/>
-        <br/><b>AgentGateway</b>
-      </a><br/><sub>Agent proxy · AAIF</sub>
-    </td>
-    <td align="center">
       <a href="https://www.postgresql.org">
         <img src="https://cdn.simpleicons.org/postgresql/4169E1" width="56" height="56" alt="PostgreSQL"/>
         <br/><b>PostgreSQL</b>
@@ -152,8 +116,6 @@ All tools used in the PortCon 2026 talk and in this reference implementation.
         <br/><b>Docker</b>
       </a><br/><sub>Local dev</sub>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://www.typescriptlang.org">
         <img src="https://cdn.simpleicons.org/typescript/3178C6" width="56" height="56" alt="TypeScript"/>
@@ -165,18 +127,6 @@ All tools used in the PortCon 2026 talk and in this reference implementation.
         <img src="https://cdn.simpleicons.org/python/3776AB" width="56" height="56" alt="Python"/>
         <br/><b>Python</b>
       </a><br/><sub>Scripts · ops</sub>
-    </td>
-    <td align="center">
-      <a href="https://aaif.io">
-        <img src="https://github.com/aaif.png?size=56" width="56" height="56" alt="AAIF"/>
-        <br/><b>AAIF</b>
-      </a><br/><sub>Open standards</sub>
-    </td>
-    <td align="center" colspan="2">
-      <a href="https://www.linuxfoundation.org">
-        <img src="https://cdn.simpleicons.org/linuxfoundation/003778" width="56" height="56" alt="Linux Foundation"/>
-        <br/><b>Linux Foundation</b>
-      </a><br/><sub>AAIF steward</sub>
     </td>
   </tr>
 </table>
