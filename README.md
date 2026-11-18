@@ -12,13 +12,13 @@
 A production-oriented engineering factory: a `WorkOrder` moves through five specialised stages, each producing independently verified artifacts, until a trusted verifier the producer cannot control either accepts or blocks the final handoff.
 
 > [!IMPORTANT]
-> **Two operating terms coined here by [Darshit Pandya](https://www.linkedin.com/in/darshitpandya/) — FactoryRun and FactoryRelease**
+> **Two operating terms coined here by [Darshit Pandya](https://www.linkedin.com/in/darshitpandya/) - FactoryRun and FactoryRelease**
 >
 > The engineering community has established the term *AI software factory*. This work proposes two precise operating terms that give the concept its governance structure.
 >
-> **FactoryRun** — the complete journey of one work order through the factory: its stages, attempts, artifacts, acceptance decisions, and evidence. *Answers: what happened?*
+> **FactoryRun** - the complete journey of one work order through the factory: its stages, attempts, artifacts, acceptance decisions, and evidence. *Answers: what happened?*
 >
-> **FactoryRelease** — the approved, versioned factory configuration that produced that run: models, skills, tools, permissions, workflow, and sandbox, all pinned. *Answers: which machinery produced it?*
+> **FactoryRelease** - the approved, versioned factory configuration that produced that run: models, skills, tools, permissions, workflow, and sandbox, all pinned. *Answers: which machinery produced it?*
 >
 > A green agent status answers neither question. Independent proof is required for both.
 
@@ -40,7 +40,7 @@ Three AAIF projects are directly used in this factory. The [Agentic AI Foundatio
     </td>
     <td>
       <b>Model Context Protocol</b> &nbsp;·&nbsp; <a href="https://github.com/modelcontextprotocol">github.com/modelcontextprotocol</a><br/>
-      Every tool integration in this factory — Port context, GitHub operations, security scanners — goes through MCP. <code>tools.lock.json</code> pins the approved MCP server identities and tool names for each stage.
+      Every tool integration in this factory - Port context, GitHub operations, security scanners - goes through MCP. <code>tools.lock.json</code> pins the approved MCP server identities and tool names for each stage.
     </td>
   </tr>
   <tr>
@@ -52,7 +52,7 @@ Three AAIF projects are directly used in this factory. The [Agentic AI Foundatio
     </td>
     <td>
       <b>AGENTS.md</b> &nbsp;·&nbsp; <a href="https://github.com/agentsmd/agents.md">github.com/agentsmd/agents.md</a><br/>
-      Each of the five factories ships a dedicated <code>AGENTS.md</code> file — build commands, path boundaries, conventions, do-not-modify areas — loaded by the <code>claude-executor</code> package before every stage run.
+      Each of the five factories ships a dedicated <code>AGENTS.md</code> file - build commands, path boundaries, conventions, do-not-modify areas - loaded by the <code>claude-executor</code> package before every stage run.
     </td>
   </tr>
   <tr>
@@ -169,7 +169,7 @@ All tools used in this reference implementation.
 <img src="docs/diagrams/s07-two-release-contracts-light.png#gh-light-mode-only" alt="Two release contracts" width="860">
 <img src="docs/diagrams/s07-two-release-contracts-dark.png#gh-dark-mode-only" alt="Two release contracts" width="860">
 
-Two independent contracts govern the system. Contract One controls what the factory produces — engineering changes, artifacts, PRs. Contract Two controls the factory itself — model selection, skill versions, evaluation, promotion. Neither contract can satisfy the other's acceptance requirements.
+Two independent contracts govern the system. Contract One controls what the factory produces - engineering changes, artifacts, PRs. Contract Two controls the factory itself - model selection, skill versions, evaluation, promotion. Neither contract can satisfy the other's acceptance requirements.
 
 <img src="docs/diagrams/s19-five-interfaces-light.png#gh-light-mode-only" alt="Five Factory Contract interfaces" width="860">
 <img src="docs/diagrams/s19-five-interfaces-dark.png#gh-dark-mode-only" alt="Five Factory Contract interfaces" width="860">
@@ -221,8 +221,8 @@ factories/
   platform-operations/    AGENTS.md, 3×SKILL.md, acceptance.yaml, verify script
 
 factory-releases/
-  1.4.0/factory-release.yaml   ACTIVE — per-stage model assignments + sandbox config
-  1.5.0/factory-release.yaml   CANDIDATE — arch + eng use claude-fable-5-2
+  1.4.0/factory-release.yaml   ACTIVE - per-stage model assignments + sandbox config
+  1.5.0/factory-release.yaml   CANDIDATE - arch + eng use claude-fable-5-2
   active.yaml                  Protected pointer; update only via pnpm factory promote
   skills.lock.json             Real SHA-256 digests for all 15 skills
 ```
@@ -236,12 +236,12 @@ factory-releases/
 
 | Repo | Role |
 |------|------|
-| **This repo** | Factory engine — contracts, coordinator, executor, 5 stages, evaluation, CLI |
-| [`ai-factory-trusted-verifier`](https://github.com/Darshitpandya/ai-factory-trusted-verifier) | Independently owned verifier — GitHub App, oasdiff, protected policies |
-| [`factory-reference-billing-api`](https://github.com/Darshitpandya/factory-reference-billing-api) | TypeScript consumer — invoice export, the breaking-change demo |
-| [`factory-reference-notification-api`](https://github.com/Darshitpandya/factory-reference-notification-api) | Python consumer — event schema, PII controls, reuse proof |
+| **This repo** | Factory engine - contracts, coordinator, executor, 5 stages, evaluation, CLI |
+| [`ai-factory-trusted-verifier`](https://github.com/Darshitpandya/ai-factory-trusted-verifier) | Independently owned verifier - GitHub App, oasdiff, protected policies |
+| [`factory-reference-billing-api`](https://github.com/Darshitpandya/factory-reference-billing-api) | TypeScript consumer - invoice export, the breaking-change demo |
+| [`factory-reference-notification-api`](https://github.com/Darshitpandya/factory-reference-notification-api) | Python consumer - event schema, PII controls, reuse proof |
 
-The trust boundary: the billing and notification repos require `factory-contract/acceptance` from the **verifier's GitHub App** — the producer App cannot satisfy it.
+The trust boundary: the billing and notification repos require `factory-contract/acceptance` from the **verifier's GitHub App** - the producer App cannot satisfy it.
 
 ---
 
@@ -310,7 +310,7 @@ pnpm typecheck && pnpm lint && pnpm test
 
 ## Factory Release Model Assignments
 
-**Release 1.4.0 (ACTIVE)** — per-stage assignments, not a single model:
+**Release 1.4.0 (ACTIVE)** - per-stage assignments, not a single model:
 
 | Stage | Model | Rationale |
 |-------|-------|-----------|
@@ -339,20 +339,20 @@ Port is the control plane. Three steps for a fresh org:
 
 ![Port control plane tour](docs/diagrams/port-control-plane-tour.gif)
 
-**1. Blueprints — Terraform**
+**1. Blueprints - Terraform**
 ```bash
 cd infra/terraform && cp terraform.tfvars.example terraform.tfvars
 # Fill in: port_client_id, port_client_secret, github_token, github_owner
 terraform init && terraform apply
 ```
 
-**2. Pages — restore script**
+**2. Pages - restore script**
 ```bash
 export PORT_CLIENT_ID=... PORT_CLIENT_SECRET=...
 python3 control-plane/port/apply-pages.py
 ```
 
-**3. Data — backfill after runs**
+**3. Data - backfill after runs**
 ```bash
 python3 scripts/backfill-port-runs.py
 ```
@@ -412,7 +412,7 @@ See [`infra/github/`](infra/github/README.md) for setup scripts.
 <img src="docs/diagrams/s44-factory-economics-light.png#gh-light-mode-only" alt="Measure the factory as a production system" width="860">
 <img src="docs/diagrams/s44-factory-economics-dark.png#gh-dark-mode-only" alt="Measure the factory as a production system" width="860">
 
-Measure accepted work-order throughput, lead time, rework rate, and cost per accepted change — not token consumption or lines of code generated.
+Measure accepted work-order throughput, lead time, rework rate, and cost per accepted change - not token consumption or lines of code generated.
 
 ---
 
@@ -439,9 +439,9 @@ You do **not** copy any orchestration code. The factory runs against your repo r
 
 ## Security
 
-- Bring your own credentials — Port org, Anthropic API key, GitHub App private keys; none are provided or stored here
+- Bring your own credentials - Port org, Anthropic API key, GitHub App private keys; none are provided or stored here
 - The trusted verifier runs in a separate repo under separate ownership
-- Each stage's acceptance is set by the verifier or an authorised human — never by the stage executor
+- Each stage's acceptance is set by the verifier or an authorised human - never by the stage executor
 - `factory-releases/active.yaml` is updated only via `pnpm factory promote` after a valid `PromotionDecision`
 
 See [SECURITY.md](SECURITY.md).
@@ -456,4 +456,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Your `WorkOrder` contents, `AGENTS.md`, and produced artifacts are yours.
+MIT - see [LICENSE](LICENSE). Your `WorkOrder` contents, `AGENTS.md`, and produced artifacts are yours.
