@@ -1,0 +1,38 @@
+apiVersion: factory.contract/v1
+kind: EvaluationWorkOrder
+
+metadata:
+  id: eval-wo-002
+  title: "Notification event schema extension — evaluation fixture"
+  version: 1
+  # FIXED: do not modify; this is the locked evaluation input
+
+workOrder:
+  targetService: factory-reference-notification-api
+  scope: |
+    Add an account.reactivated event type to the notification contract.
+
+    The account.reactivated event fires when a previously suspended account
+    is reactivated (e.g. after a billing reconciliation restores access).
+    This is a non-breaking addition — existing consumers continue to process
+    the events they already know. Removing or renaming existing event types
+    is breaking and must be rejected by the acceptance check.
+
+  constraints:
+    backwardCompatibility: |
+      Existing eventType enum values must not be changed or removed.
+      Adding a new value is non-breaking per the schema contract.
+    piiPolicy: |
+      The event payload must not contain PII at rest.
+      Use entityId (opaque reference) rather than customer name or email.
+    deliveryReliability: |
+      New events must follow the outbox pattern.
+      Delivery must be idempotent (retry-safe).
+    schemaValidation: |
+      All fixtures under contracts/events/fixtures/ must pass validation
+      against contracts/events/notification-requested.schema.json.
+
+hardGateInputs:
+  schemaCompatibilityRequired: true
+  piiCheckRequired: true
+  baseSchemaPath: "contracts/events/notification-requested.schema.json"

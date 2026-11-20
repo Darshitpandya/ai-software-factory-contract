@@ -1,5 +1,5 @@
 # ─── Blueprints ──────────────────────────────────────────────────────────────
-# All 7 blueprints that form the AI Software Factory Contract context model.
+# All 8 blueprints that form the AI Software Factory Contract context model.
 # Run: terraform apply → all blueprints created with relations, enums, and icons.
 
 # ── service ──────────────────────────────────────────────────────────────────
@@ -327,6 +327,76 @@ resource "port_blueprint" "factory_component" {
   }
 
   depends_on = [port_blueprint.factory_release]
+}
+
+# ── repositoryContract ───────────────────────────────────────────────────────
+# One of the five first-class factory records. Each consumer repository carries
+# a .factory/repository-contract.yaml; Port holds the catalog view.
+resource "port_blueprint" "repository_contract" {
+  identifier   = "repositoryContract"
+  title        = "Repository Contract"
+  icon         = "Github"
+  description  = "The versioned acceptance policy and execution configuration for a consumer repository. Defined in .factory/repository-contract.yaml; Port holds the catalog view."
+
+  properties = {
+    string_props = {
+      "consumedRelease" = {
+        title    = "Consumed Factory Release"
+        required = false
+      }
+      "language" = {
+        title    = "Language"
+        required = false
+        enum     = ["TypeScript", "Python", "Go", "Java", "Rust"]
+        enum_colors = {
+          "TypeScript" = "blue"
+          "Python"     = "yellow"
+          "Go"         = "green"
+          "Java"       = "orange"
+          "Rust"       = "brown"
+        }
+      }
+      "owner" = {
+        title    = "Owner Team"
+        required = false
+      }
+      "compatibilityBaselinePath" = {
+        title    = "Compatibility Baseline Path"
+        required = false
+      }
+      "requiredChecks" = {
+        title    = "Required Acceptance Checks"
+        required = false
+      }
+      "contractPath" = {
+        title    = "Contract File Path"
+        required = false
+      }
+    }
+    boolean_props = {
+      "tenantIsolationRequired" = {
+        title    = "Tenant Isolation Required"
+        required = false
+      }
+    }
+  }
+
+  relations = {
+    "service" = {
+      title    = "Service"
+      target   = "service"
+      many     = false
+      required = false
+    }
+    "factoryRelease" = {
+      title    = "Factory Release"
+      target   = "factoryRelease"
+      many     = false
+      required = false
+    }
+  }
+
+  depends_on = [port_blueprint.service, port_blueprint.factory_release]
 }
 
 # ── factorySkill ──────────────────────────────────────────────────────────────
