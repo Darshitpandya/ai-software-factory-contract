@@ -3,6 +3,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { FactoryStage, FactoryReleaseConfig, TokenUsage } from "@factory/contract-types";
 import { readFileSync } from "fs";
 import path from "path";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
 export interface StageExecutionInput {
   stage: FactoryStage;
@@ -13,6 +15,17 @@ export interface StageExecutionInput {
   workspaceDir: string;
   allowedTools: string[];
   maxTurns?: number;
+  /**
+   * When set, run_command calls are routed through `docker exec <containerId>` for
+   * real container isolation. Set by the coordinator from SandboxSession.containerId.
+   */
+  containerId?: string;
+  /**
+   * When set, the executor connects to this MCP server over stdio for Port catalog
+   * lookups. The binary is typically `tsx packages/port-mcp-server/src/index.ts`.
+   * Falls back gracefully if the server fails to start.
+   */
+  portMcpBinary?: string;
 }
 
 export interface StageExecutionResult {
@@ -22,6 +35,55 @@ export interface StageExecutionResult {
   tokenUsage: TokenUsage;
   modelUsed: string;
   exitCode: number;
+}
+
+// ─── MCP client for Port catalog ─────────────────────────────────────────────
+
+interface McpToolInfo {
+  client: Client;
+  tools: Anthropic.Tool[];
+  dispose: () => void;
+}
+
+/**
+ * Connect to the Port MCP server over stdio.
+ * Returns the connected client + Anthropic-formatted tool definitions.
+ * Returns null (with a warning) if the server cannot be started.
+ */
+async function connectPortMcp(binaryPath: string): Promise<McpToolInfo | null> {
+  try {
+    const transport = new StdioClientTransport({
+      command: "tsx",
+      args: [binaryPath],
+      env: { ...process.env as Record<string, string> },
+    });
+
+    const mcpClient = new Client({ name: "factory-executor", version: "1.0.0" }, { capabilities: {} });
+    await mcpClient.connect(transport);
+
+    const { tools: mcpTools } = await mcpClient.listTools();
+
+    // Convert MCP tool format to Anthropic tool format
+    const anthropicTools: Anthropic.Tool[] = mcpTools.map(t => ({
+      name: `mcp__port__${t.name}`,
+      description: `[Port MCP] ${t.description ?? t.name}`,
+      input_schema: (t.inputSchema as Anthropic.Tool["input_schema"]) ?? {
+        type: "object" as const,
+        properties: {},
+      },
+    }));
+
+    console.log(`  ✓ Port MCP server connected (${mcpTools.length} tools: ${mcpTools.map(t => t.name).join(", ")})`);
+
+    return {
+      client: mcpClient,
+      tools: anthropicTools,
+      dispose: () => { transport.close().catch(() => {}); },
+    };
+  } catch (e) {
+    console.warn(`  ⚠ Port MCP server unavailable — falling back to context snapshot: ${(e as Error).message ?? e}`);
+    return null;
+  }
 }
 
 // ─── AGENTS.md and SKILL.md resolution ──────────────────────────────────────
@@ -145,7 +207,8 @@ async function executeTool(
   toolName: string,
   toolInput: Record<string, unknown>,
   workspaceDir: string,
-  allowedCommands: string[]
+  allowedCommands: string[],
+  containerId?: string
 ): Promise<ToolResult> {
   const { execSync } = await import("child_process");
 
@@ -184,14 +247,27 @@ async function executeTool(
         };
       }
       try {
-        const cwd = toolInput["cwd"]
-          ? path.join(workspaceDir, toolInput["cwd"] as string)
-          : workspaceDir;
-        const output = execSync(cmd, {
-          cwd,
-          encoding: "utf-8",
-          timeout: 120_000,
-        });
+        let output: string;
+        if (containerId) {
+          // Route through docker exec for real container isolation
+          const relCwd = toolInput["cwd"]
+            ? `/workspace/${toolInput["cwd"] as string}`
+            : "/workspace";
+          const escapedCmd = cmd.replace(/"/g, '\\"');
+          output = execSync(
+            `docker exec ${containerId} sh -c "cd ${relCwd} && ${escapedCmd}"`,
+            { encoding: "utf-8", timeout: 120_000 }
+          );
+        } else {
+          const cwd = toolInput["cwd"]
+            ? path.join(workspaceDir, toolInput["cwd"] as string)
+            : workspaceDir;
+          output = execSync(cmd, {
+            cwd,
+            encoding: "utf-8",
+            timeout: 120_000,
+          });
+        }
         return { content: output };
       } catch (e: unknown) {
         const err = e as { stdout?: string; stderr?: string; message?: string };
@@ -241,7 +317,7 @@ export class ClaudeExecutor {
   }
 
   async executeStage(input: StageExecutionInput): Promise<StageExecutionResult> {
-    const { stage, factoryRelease, contextSnapshot, workspaceDir, allowedTools, maxTurns = 25 } = input;
+    const { stage, factoryRelease, contextSnapshot, workspaceDir, allowedTools, maxTurns = 25, containerId, portMcpBinary } = input;
 
     // Resolve model: stage override > defaultModel
     const model =
@@ -254,6 +330,14 @@ export class ClaudeExecutor {
 
     const tools = buildFactoryTools(allowedTools);
     const allowedCommands = getAllowedCommandsForStage(stage);
+
+    // Optionally connect to Port MCP server for real catalog lookups
+    const mcpInfo = portMcpBinary
+      ? await connectPortMcp(portMcpBinary)
+      : null;
+
+    // Merge MCP tools into the tool list (MCP tools are prefixed mcp__port__)
+    const allTools = mcpInfo ? [...tools, ...mcpInfo.tools] : tools;
 
     const messages: Anthropic.MessageParam[] = [
       {
@@ -274,7 +358,7 @@ export class ClaudeExecutor {
         model,
         max_tokens: 16000,
         system: systemPrompt,
-        tools,
+        tools: allTools,
         messages,
       });
 
@@ -308,12 +392,34 @@ export class ClaudeExecutor {
       for (const block of response.content) {
         if (block.type !== "tool_use") continue;
 
-        const result = await executeTool(
-          block.name,
-          block.input as Record<string, unknown>,
-          workspaceDir,
-          allowedCommands
-        );
+        let result: ToolResult;
+
+        // Route MCP-prefixed tools to the MCP server
+        if (block.name.startsWith("mcp__port__") && mcpInfo) {
+          const mcpToolName = block.name.replace("mcp__port__", "");
+          try {
+            const mcpResult = await mcpInfo.client.callTool({
+              name: mcpToolName,
+              arguments: block.input as Record<string, unknown>,
+            });
+            const contentItems = (mcpResult.content as Array<{ type: string; text?: string }>) ?? [];
+            const text = contentItems
+              .filter((c) => c.type === "text")
+              .map(c => c.text ?? "")
+              .join("\n");
+            result = { content: text, isError: mcpResult.isError as boolean | undefined };
+          } catch (e) {
+            result = { content: `MCP call failed: ${(e as Error).message}`, isError: true };
+          }
+        } else {
+          result = await executeTool(
+            block.name,
+            block.input as Record<string, unknown>,
+            workspaceDir,
+            allowedCommands,
+            containerId
+          );
+        }
 
         // Capture produced files from report_stage_output
         if (block.name === "report_stage_output") {
@@ -341,6 +447,10 @@ export class ClaudeExecutor {
 
     const finalSuccess = !error && producedFiles.length > 0;
     console.log(`    [DEBUG] error="${error}", blocked=${blocked}, files=${producedFiles.length}, success=${finalSuccess}`);
+
+    // Disconnect MCP server if one was started
+    mcpInfo?.dispose();
+
     return {
       // blocked=true with files produced = PRODUCED (local verify cmd failed but artifacts exist)
       // blocked=true with no files = FAILED (couldn't start work)
@@ -406,7 +516,7 @@ function buildStagePrompt(
   const outputFiles: Record<FactoryStage, string[]> = {
     "product-requirements":    ["product-spec.md", "acceptance.yaml", "work-items.json"],
     "software-architecture":   ["architecture.md", "openapi-delta.yaml", "adr.md"],
-    "software-engineering":    ["implementation-notes.md", "pr-description.md"],
+    "software-engineering":    ["implementation-notes.md"],
     "security-compliance":     ["security-review.md", "compliance-checklist.md"],
     "platform-operations":     ["deployment.json", "health-evidence.json", "runbook.md"],
   };
@@ -418,9 +528,19 @@ function buildStagePrompt(
 - health-evidence.json: JSON document with smoke test definitions and expected results
 - runbook.md: Markdown operational runbook with startup, shutdown, rollback procedures
 Write realistic, substantive documentation based on the work order. Do NOT attempt to run docker or deployment commands.`,
-    "software-engineering": `IMPORTANT: Produce implementation documentation, not actual code changes.
-- implementation-notes.md: Technical implementation guidance for developers
-- pr-description.md: PR description with scope, breaking change assessment, test coverage notes`,
+    "software-engineering": `SOFTWARE-ENGINEERING STAGE — Produce REAL TypeScript implementation.
+
+Workflow:
+1. Read work-order.json for the full scope and requirements.
+2. Run list_directory on the workspace root to see what source files are available.
+3. If src/ directory exists: read the existing files, then write your modified TypeScript files using write_file.
+4. If no src/ directory: create TypeScript implementation files from scratch based on the work order requirements.
+5. Write implementation-notes.md summarising: what files were changed, design decisions, how to test.
+6. Optionally run pnpm typecheck or pnpm test to verify the code (these are allowlisted).
+7. Call report_stage_output(outputFiles=["implementation-notes.md"], summary="...").
+
+CRITICAL: Write real, compilable TypeScript. Do not write placeholder or stub content.
+The coordinator will push all files you write to a GitHub branch and open a PR automatically.`,
   };
 
   const note = stageNotes[stage] ? `\n\n${stageNotes[stage]}` : "";
