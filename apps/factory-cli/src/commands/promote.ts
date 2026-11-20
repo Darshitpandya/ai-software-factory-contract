@@ -5,7 +5,7 @@ export async function promoteCommand(opts: {
   candidate: string;
   decision: string;
 }): Promise<void> {
-  const pool = new Pool({ connectionString: process.env["DATABASE_URL"] });
+  const pool = new Pool(process.env["DATABASE_SSL"] === "true" ? { connectionString: process.env["DATABASE_URL"], ssl: { rejectUnauthorized: false } } : { connectionString: process.env["DATABASE_URL"] });
 
   // Verify decision exists and all hard gates passed
   const res = await pool.query(

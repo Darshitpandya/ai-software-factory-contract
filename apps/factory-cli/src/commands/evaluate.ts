@@ -23,7 +23,7 @@ export async function evaluationRunCommand(opts: {
   console.log(`  candidate: ${candidate}`);
   console.log(`  suite:     ${suite}`);
 
-  const pool = new Pool({ connectionString: process.env["DATABASE_URL"] });
+  const pool = new Pool(process.env["DATABASE_SSL"] === "true" ? { connectionString: process.env["DATABASE_URL"], ssl: { rejectUnauthorized: false } } : { connectionString: process.env["DATABASE_URL"] });
   const comparisonId = crypto.randomUUID();
 
   await pool.query(
@@ -48,7 +48,7 @@ export async function evaluationRunCommand(opts: {
 }
 
 export async function evaluationReportCommand(opts: { comparison: string }): Promise<void> {
-  const pool = new Pool({ connectionString: process.env["DATABASE_URL"] });
+  const pool = new Pool(process.env["DATABASE_SSL"] === "true" ? { connectionString: process.env["DATABASE_URL"], ssl: { rejectUnauthorized: false } } : { connectionString: process.env["DATABASE_URL"] });
   const res = await pool.query(
     "SELECT * FROM evaluation_comparisons WHERE id = $1",
     [opts.comparison]

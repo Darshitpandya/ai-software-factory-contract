@@ -51,9 +51,9 @@ async function seedEngineeringWorkspace(
   workOrderContext: Record<string, unknown>,
   ghClient?: GitHubProducerClient
 ): Promise<void> {
-  const billingRepo = process.env["GITHUB_BILLING_REPO"]; // "owner/repo"
+  const billingRepo = process.env["BILLING_REPO"]; // "owner/repo"
   if (!ghClient || !billingRepo || !billingRepo.includes("/")) {
-    console.log("  ⚠ GITHUB_BILLING_REPO not set — engineering stage uses work-order context only");
+    console.log("  ⚠ BILLING_REPO not set — engineering stage uses work-order context only");
     return;
   }
 
@@ -118,9 +118,9 @@ async function createPrFromWorkspace(
   factoryRelease: string,
   ghClient?: GitHubProducerClient
 ): Promise<{ headSha: string; prOwner: string; prRepo: string; prNumber: number; prUrl: string } | null> {
-  const billingRepo = process.env["GITHUB_BILLING_REPO"];
+  const billingRepo = process.env["BILLING_REPO"];
   if (!ghClient || !billingRepo || !billingRepo.includes("/")) {
-    console.log("  ⚠ GITHUB_BILLING_REPO not set — skipping PR creation for engineering stage");
+    console.log("  ⚠ BILLING_REPO not set — skipping PR creation for engineering stage");
     return null;
   }
 
@@ -218,7 +218,13 @@ async function createPrFromWorkspace(
 
 async function main(): Promise<void> {
   console.log("🏭 Factory Coordinator starting...");
-  const pool = new Pool({ connectionString: process.env["DATABASE_URL"] });
+
+  // Build PostgreSQL config — Railway requires SSL
+  const dbConfig = process.env["DATABASE_SSL"] === "true"
+    ? { connectionString: process.env["DATABASE_URL"], ssl: { rejectUnauthorized: false } }
+    : { connectionString: process.env["DATABASE_URL"] };
+
+  const pool = new Pool(dbConfig);
   const port = createPortClientFromEnv();
   const executor = createClaudeExecutorFromEnv(REPOROOT);
   const sandbox = createSandboxAdapterFromEnv();

@@ -192,19 +192,39 @@ export class GitHubProducerClient {
 
 export function createGitHubClientFromEnv(): GitHubProducerClient {
   const appId = process.env["FACTORY_APP_ID"];
-  const privateKeyPath = process.env["FACTORY_APP_PRIVATE_KEY_PATH"];
   const installationId = process.env["FACTORY_APP_INSTALLATION_ID"];
 
-  if (!appId || !privateKeyPath || !installationId) {
+  if (!appId || !installationId) {
     throw new Error(
-      "GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY_PATH, GITHUB_APP_INSTALLATION_ID must be set"
+      "FACTORY_APP_ID and FACTORY_APP_INSTALLATION_ID must be set"
     );
   }
 
-  // Private key is read from the filesystem path — never embedded in env directly
+  // Private key: prefer inline env var (Railway/cloud), fall back to file path (local dev)
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { readFileSync } = require("fs") as typeof import("fs");
-  const privateKey = readFileSync(privateKeyPath, "utf-8");
+  const { readFileSync, writeFileSync, existsSync } = require("fs") as typeof import("fs");
+
+  let privateKey: string;
+
+  const keyContent = process.env["FACTORY_APP_PRIVATE_KEY_CONTENT"];
+  const keyPath = process.env["FACTORY_APP_PRIVATE_KEY_PATH"];
+
+  if (keyContent) {
+    // Railway / cloud deployment: key provided as env var content
+    // Write to a temp file so the Octokit App constructor can consume it
+    const tmpPath = "/tmp/factory_app_key.pem";
+    if (!existsSync(tmpPath)) {
+      writeFileSync(tmpPath, keyContent.replace(/\\n/g, "\n"), "utf-8");
+    }
+    privateKey = keyContent.replace(/\\n/g, "\n");
+  } else if (keyPath) {
+    // Local dev: key provided as a file path
+    privateKey = readFileSync(keyPath, "utf-8");
+  } else {
+    throw new Error(
+      "GitHub App private key not configured. Set FACTORY_APP_PRIVATE_KEY_CONTENT (cloud) or FACTORY_APP_PRIVATE_KEY_PATH (local dev)"
+    );
+  }
 
   return new GitHubProducerClient({
     appId,

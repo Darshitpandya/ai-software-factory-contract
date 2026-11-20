@@ -1,7 +1,7 @@
 import { Pool } from "pg";
 
 export async function evidenceVerifyCommand(opts: { runId: string }): Promise<void> {
-  const pool = new Pool({ connectionString: process.env["DATABASE_URL"] });
+  const pool = new Pool(process.env["DATABASE_SSL"] === "true" ? { connectionString: process.env["DATABASE_URL"], ssl: { rejectUnauthorized: false } } : { connectionString: process.env["DATABASE_URL"] });
   const res = await pool.query("SELECT * FROM factory_runs WHERE id = $1", [opts.runId]);
   const row = res.rows[0] as Record<string, unknown> | undefined;
 

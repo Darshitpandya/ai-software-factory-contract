@@ -100,6 +100,8 @@ jobs:
           FACTORY_APP_ID: ${{ secrets.FACTORY_APP_ID }}
           FACTORY_APP_PRIVATE_KEY_PATH: /tmp/factory_key.pem
           FACTORY_APP_INSTALLATION_ID: ${{ secrets.FACTORY_APP_INSTALLATION_ID }}
+          BILLING_REPO: ${{ secrets.BILLING_REPO }}
+          NOTIFICATION_REPO: ${{ secrets.NOTIFICATION_REPO }}
         run: |
           # Write GitHub App key if available
           if [ -n "${{ secrets.FACTORY_APP_PRIVATE_KEY }}" ]; then
