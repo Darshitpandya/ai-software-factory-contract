@@ -225,6 +225,21 @@ async function main(): Promise<void> {
     : { connectionString: process.env["DATABASE_URL"] };
 
   const pool = new Pool(dbConfig);
+
+  // Run database migration on startup (idempotent — safe to run every time)
+  try {
+    const migrationSql = readFileSync(path.join(REPOROOT, "db/migrations/001_init.sql"), "utf-8");
+    await pool.query(migrationSql);
+    console.log("✓ Database schema ready");
+  } catch (e) {
+    const err = e as Error;
+    if (err.message?.includes("already exists")) {
+      console.log("✓ Database schema already current");
+    } else {
+      console.error("✗ Migration failed:", err.message);
+      process.exit(1);
+    }
+  }
   const port = createPortClientFromEnv();
   const executor = createClaudeExecutorFromEnv(REPOROOT);
   const sandbox = createSandboxAdapterFromEnv();
