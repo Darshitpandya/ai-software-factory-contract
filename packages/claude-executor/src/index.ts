@@ -16,8 +16,15 @@ export interface StageExecutionInput {
   allowedTools: string[];
   maxTurns?: number;
   /**
-   * When set, run_command calls are routed through `docker exec <containerId>` for
-   * real container isolation. Set by the coordinator from SandboxSession.containerId.
+   * When set, run_command calls are routed through the OpenSandbox SDK's
+   * commands.run() API for real protocol-level isolation.
+   * Provided by the coordinator from SandboxSession.sandboxHandle.
+   * Falls back to local execSync when not provided.
+   */
+  sandboxCommandRunner?: (cmd: string, cwd?: string) => Promise<string>;
+  /**
+   * Legacy fallback: when sandboxCommandRunner is not set and this is set,
+   * run_command calls are routed through `docker exec <containerId>`.
    */
   containerId?: string;
   /**
@@ -208,7 +215,8 @@ async function executeTool(
   toolInput: Record<string, unknown>,
   workspaceDir: string,
   allowedCommands: string[],
-  containerId?: string
+  containerId?: string,
+  sandboxCommandRunner?: (cmd: string, cwd?: string) => Promise<string>
 ): Promise<ToolResult> {
   const { execSync } = await import("child_process");
 
@@ -248,8 +256,12 @@ async function executeTool(
       }
       try {
         let output: string;
-        if (containerId) {
-          // Route through docker exec for real container isolation
+        if (sandboxCommandRunner) {
+          // Route through OpenSandbox SDK — real protocol-level isolation
+          const relCwd = toolInput["cwd"] as string | undefined;
+          output = await sandboxCommandRunner(cmd, relCwd);
+        } else if (containerId) {
+          // Legacy: route through docker exec
           const relCwd = toolInput["cwd"]
             ? `/workspace/${toolInput["cwd"] as string}`
             : "/workspace";
@@ -317,7 +329,7 @@ export class ClaudeExecutor {
   }
 
   async executeStage(input: StageExecutionInput): Promise<StageExecutionResult> {
-    const { stage, factoryRelease, contextSnapshot, workspaceDir, allowedTools, maxTurns = 25, containerId, portMcpBinary } = input;
+    const { stage, factoryRelease, contextSnapshot, workspaceDir, allowedTools, maxTurns = 25, containerId, portMcpBinary, sandboxCommandRunner } = input;
 
     // Resolve model: stage override > defaultModel
     const model =
@@ -417,7 +429,8 @@ export class ClaudeExecutor {
             block.input as Record<string, unknown>,
             workspaceDir,
             allowedCommands,
-            containerId
+            containerId,
+            sandboxCommandRunner
           );
         }
 
