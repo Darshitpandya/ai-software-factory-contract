@@ -25,6 +25,7 @@ COPY factories/ ./factories/
 COPY factory-releases/ ./factory-releases/
 COPY contracts/ ./contracts/
 COPY evaluation/ ./evaluation/
+COPY db/ ./db/
 
 # Install all dependencies
 RUN pnpm install --frozen-lockfile
