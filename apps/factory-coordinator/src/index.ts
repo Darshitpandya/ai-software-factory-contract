@@ -152,7 +152,6 @@ async function createPrFromWorkspace(
     };
 
     const filePaths = collectFiles(workspaceDir);
-    let lastCommitSha = baseSha;
 
     for (const relPath of filePaths) {
       try {
@@ -165,7 +164,7 @@ async function createPrFromWorkspace(
         } catch {
           // New file — no existing SHA needed
         }
-        lastCommitSha = await ghClient.pushFile(
+        await ghClient.pushFile(
           owner, repo, branchName, relPath, content,
           `chore: factory-run ${runId.slice(0, 8)} — ${relPath}`,
           existingSha
