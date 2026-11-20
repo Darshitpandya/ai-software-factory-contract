@@ -68,7 +68,7 @@ jobs:
           curl -s -X PATCH "https://api.getport.io/v1/actions/runs/${{ inputs.portRunId }}" \
             -H "Authorization: Bearer $PORT_TOKEN" \
             -H "Content-Type: application/json" \
-            -d "{\"status\":\"IN_PROGRESS\",\"summary\":\"Evaluation started: ${{ inputs.baseVersion }} vs ${{ inputs.candidateVersion }}\"}"
+            -d "{\"status\":\"SUCCESS\",\"summary\":\"Evaluation dispatched: ${{ inputs.baseVersion }} vs ${{ inputs.candidateVersion }} — workflow running\"}" || true
 
       # ── Validate release files exist ───────────────────────────────────────
       - name: Validate release versions
