@@ -14,6 +14,7 @@
     "@factory/sandbox-adapter": "workspace:*",
     "@factory/artifact-store": "workspace:*",
     "@factory/acceptance-client": "workspace:*",
+    "@factory/github-client": "workspace:*",
     "pg": "^8.12.0",
     "js-yaml": "^4.1.0"
   },

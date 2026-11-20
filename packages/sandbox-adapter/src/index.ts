@@ -19,29 +19,68 @@ export interface SandboxSession {
   mode: "local-docker" | "opensandbox";
   createdAt: string;
   expiresAt: string;
+  /** Set when a real Docker container is running. Executor uses this for docker exec. */
+  containerId?: string;
 }
 
-// ─── Local Docker sandbox (for local-dev profile) ────────────────────────────
+// ─── Local Docker sandbox ────────────────────────────────────────────────────
+//
+// Creates a real Docker container with the workspace mounted as a volume.
+// Falls back gracefully to a plain temp directory if Docker is unavailable.
 
 class LocalSandbox {
   async create(config: SandboxConfig): Promise<SandboxSession> {
     const id = crypto.randomUUID();
+    // Workspace lives on the host; it is mounted into the container as /workspace
     const workspaceDir = mkdtempSync(path.join(tmpdir(), `factory-sandbox-${id}-`));
 
     const expiresAt = new Date(
       Date.now() + (config.ttlSeconds ?? 3600) * 1000
     ).toISOString();
 
-    return {
+    const session: SandboxSession = {
       id,
       workspaceDir,
       mode: "local-docker",
       createdAt: new Date().toISOString(),
       expiresAt,
     };
+
+    // Resolve image: strip sha256: prefix for `docker run` if needed
+    const image = config.imageDigest ?? "node:22-alpine";
+    const safeImage = image.startsWith("sha256:") ? "node:22-alpine" : image;
+    const containerName = `factory-sandbox-${id.slice(0, 8)}`;
+
+    try {
+      const { execSync } = await import("child_process");
+      execSync(
+        `docker run -d --rm --name ${containerName} -v "${workspaceDir}:/workspace" ${safeImage} tail -f /dev/null`,
+        { stdio: "pipe", timeout: 30_000 }
+      );
+      session.containerId = containerName;
+      console.log(`  ✓ Docker container started: ${containerName} (image: ${safeImage})`);
+    } catch (e) {
+      console.warn(
+        `  ⚠ Docker unavailable — workspace isolation falls back to plain temp dir: ${(e as Error).message ?? e}`
+      );
+      // containerId remains undefined; executor uses local execSync
+    }
+
+    return session;
   }
 
   async destroy(session: SandboxSession): Promise<void> {
+    // Stop the Docker container before removing the workspace directory
+    if (session.containerId) {
+      try {
+        const { execSync } = await import("child_process");
+        execSync(`docker rm -f ${session.containerId}`, { stdio: "pipe", timeout: 15_000 });
+        console.log(`  ✓ Docker container stopped: ${session.containerId}`);
+      } catch (e) {
+        console.warn(`  ⚠ Could not stop container ${session.containerId}: ${(e as Error).message ?? e}`);
+      }
+    }
+    // Always clean up the host workspace directory
     try {
       rmSync(session.workspaceDir, { recursive: true, force: true });
     } catch {

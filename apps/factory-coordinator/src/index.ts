@@ -35,9 +35,187 @@ import {
   type FactoryStage,
   type FactoryReleaseConfig,
 } from "@factory/contract-types";
+import { createGitHubClientFromEnv, type GitHubProducerClient } from "@factory/github-client";
 
 const POLL_INTERVAL_MS = 10_000;
 const REPOROOT = path.resolve(".");
+
+// ─── Engineering workspace helpers ───────────────────────────────────────────
+
+/**
+ * Seed the engineering workspace with real source files from the target repo.
+ * Gracefully skips if GitHub credentials are not configured or the file is absent.
+ */
+async function seedEngineeringWorkspace(
+  workspaceDir: string,
+  workOrderContext: Record<string, unknown>,
+  ghClient?: GitHubProducerClient
+): Promise<void> {
+  const billingRepo = process.env["GITHUB_BILLING_REPO"]; // "owner/repo"
+  if (!ghClient || !billingRepo || !billingRepo.includes("/")) {
+    console.log("  ⚠ GITHUB_BILLING_REPO not set — engineering stage uses work-order context only");
+    return;
+  }
+
+  const [owner, repo] = billingRepo.split("/");
+  const { mkdirSync: mkd, writeFileSync: wf } = await import("fs");
+
+  // Key files to fetch from the target repo for Claude to work with
+  const filesToFetch = [
+    "package.json",
+    "tsconfig.json",
+    "src/index.ts",
+    "src/routes/billing.ts",
+    "src/routes/invoices.ts",
+    "src/models/invoice.ts",
+    "src/models/payment.ts",
+    "src/middleware/auth.ts",
+    "README.md",
+  ];
+
+  let fetched = 0;
+  for (const filePath of filesToFetch) {
+    try {
+      const file = await ghClient.getFileContents(owner, repo, filePath);
+      const dest = path.join(workspaceDir, filePath);
+      mkd(path.dirname(dest), { recursive: true });
+      wf(dest, file.content, "utf-8");
+      fetched++;
+    } catch {
+      // File may not exist — silently skip
+    }
+  }
+
+  console.log(
+    fetched > 0
+      ? `  ✓ Engineering workspace seeded with ${fetched} source files from ${billingRepo}`
+      : `  ⚠ No source files fetched from ${billingRepo} — stage creates implementations from scratch`
+  );
+
+  // Write a source-manifest so Claude knows what's available
+  wf(
+    path.join(workspaceDir, "source-manifest.json"),
+    JSON.stringify({
+      targetRepo: billingRepo,
+      fetchedFiles: fetched,
+      workOrderTitle: workOrderContext["title"],
+      scope: workOrderContext["scope"],
+    }, null, 2),
+    "utf-8"
+  );
+}
+
+/**
+ * After the engineering stage, push all code files Claude wrote to a new branch
+ * on the target repo and open a pull request.
+ *
+ * Returns the execution manifest (headSha + PR info) on success, null otherwise.
+ */
+async function createPrFromWorkspace(
+  workspaceDir: string,
+  runId: string,
+  workOrderContext: Record<string, unknown>,
+  factoryRelease: string,
+  ghClient?: GitHubProducerClient
+): Promise<{ headSha: string; prOwner: string; prRepo: string; prNumber: number; prUrl: string } | null> {
+  const billingRepo = process.env["GITHUB_BILLING_REPO"];
+  if (!ghClient || !billingRepo || !billingRepo.includes("/")) {
+    console.log("  ⚠ GITHUB_BILLING_REPO not set — skipping PR creation for engineering stage");
+    return null;
+  }
+
+  const [owner, repo] = billingRepo.split("/");
+  const branchName = `factory-run/${runId.slice(0, 8)}`;
+
+  try {
+    // Get current HEAD SHA to branch from
+    const baseSha = await ghClient.getLatestCommitSha(owner, repo, "main");
+    await ghClient.createBranch(owner, repo, branchName, baseSha);
+    console.log(`  ✓ Branch created: ${branchName} (from ${baseSha.slice(0, 7)})`);
+
+    // Collect all code files Claude produced in the workspace
+    const { readdirSync: rds, statSync } = await import("fs");
+    const SKIP = new Set(["work-order.json", "README.md", "source-manifest.json", "execution-manifest.json"]);
+
+    const collectFiles = (dir: string): string[] => {
+      const result: string[] = [];
+      for (const entry of rds(dir)) {
+        const full = path.join(dir, entry);
+        if (statSync(full).isDirectory()) {
+          result.push(...collectFiles(full));
+        } else {
+          const rel = path.relative(workspaceDir, full);
+          if (!SKIP.has(rel)) result.push(rel);
+        }
+      }
+      return result;
+    };
+
+    const filePaths = collectFiles(workspaceDir);
+    let lastCommitSha = baseSha;
+
+    for (const relPath of filePaths) {
+      try {
+        const content = readFileSync(path.join(workspaceDir, relPath), "utf-8");
+        // Try to get existing file SHA (needed for updates, not creates)
+        let existingSha: string | undefined;
+        try {
+          const existing = await ghClient.getFileContents(owner, repo, relPath, "main");
+          existingSha = existing.sha;
+        } catch {
+          // New file — no existing SHA needed
+        }
+        lastCommitSha = await ghClient.pushFile(
+          owner, repo, branchName, relPath, content,
+          `chore: factory-run ${runId.slice(0, 8)} — ${relPath}`,
+          existingSha
+        );
+      } catch (e) {
+        console.warn(`  ⚠ Could not push ${relPath}: ${(e as Error).message}`);
+      }
+    }
+
+    console.log(`  ✓ Pushed ${filePaths.length} file(s) to branch ${branchName}`);
+
+    // Open the pull request
+    const implNotes = existsSync(path.join(workspaceDir, "implementation-notes.md"))
+      ? readFileSync(path.join(workspaceDir, "implementation-notes.md"), "utf-8")
+      : "";
+
+    const pr = await ghClient.createPullRequest(owner, repo, {
+      title: `[AI Factory] ${workOrderContext["title"] as string ?? "Implementation"} (run: ${runId.slice(0, 8)})`,
+      body: [
+        `## AI Factory Run — \`${runId}\``,
+        ``,
+        `**Factory Release:** \`${factoryRelease}\``,
+        `**Work Order:** \`${workOrderContext["title"] as string ?? runId}\``,
+        `**Scope:** ${workOrderContext["scope"] as string ?? ""}`,
+        ``,
+        `---`,
+        ``,
+        implNotes.slice(0, 3000) || "_No implementation notes produced._",
+        ``,
+        `---`,
+        `_Opened automatically by the AI Software Factory. Review and merge after verification._`,
+      ].join("\n"),
+      head: branchName,
+      base: "main",
+    });
+
+    console.log(`  ✓ PR created: ${pr.url}`);
+
+    return {
+      headSha: pr.headSha,
+      prOwner: owner,
+      prRepo: repo,
+      prNumber: pr.number,
+      prUrl: pr.url,
+    };
+  } catch (e) {
+    console.warn(`  ⚠ PR creation failed: ${(e as Error).message ?? e}`);
+    return null;
+  }
+}
 
 async function main(): Promise<void> {
   console.log("🏭 Factory Coordinator starting...");
@@ -46,6 +224,21 @@ async function main(): Promise<void> {
   const executor = createClaudeExecutorFromEnv(REPOROOT);
   const sandbox = createSandboxAdapterFromEnv();
   const store = new ArtifactStore({ storeDir: "evidence/runs" });
+
+  // GitHub client — optional; engineering stage PR creation requires it
+  let ghClient: GitHubProducerClient | undefined;
+  try {
+    ghClient = createGitHubClientFromEnv();
+    const ghPing = await ghClient.ping();
+    if (ghPing) {
+      console.log("✓ GitHub App connected");
+    } else {
+      console.warn("⚠ GitHub App ping failed — engineering stage will not create PRs");
+      ghClient = undefined;
+    }
+  } catch {
+    console.warn("⚠ GitHub App credentials not configured — engineering stage will not create PRs");
+  }
 
   // Ping prerequisites
   const portPing = await port.ping();
@@ -64,7 +257,7 @@ async function main(): Promise<void> {
       // Sync any PENDING Port entities that have no DB record yet
       // This handles runs created via GitHub Actions self-service action
       await syncPendingFromPort(pool, port);
-      await processOneRun(pool, port, executor, sandbox, store);
+      await processOneRun(pool, port, executor, sandbox, store, ghClient);
     } catch (e) {
       console.error("Coordinator loop error:", e);
     }
@@ -77,7 +270,8 @@ async function processOneRun(
   port: ReturnType<typeof createPortClientFromEnv>,
   executor: ReturnType<typeof createClaudeExecutorFromEnv>,
   sandbox: ReturnType<typeof createSandboxAdapterFromEnv>,
-  store: ArtifactStore
+  store: ArtifactStore,
+  ghClient?: GitHubProducerClient
 ): Promise<void> {
   // Find one PENDING or RUNNING run
   const res = await pool.query(
@@ -178,6 +372,11 @@ async function processOneRun(
     );
     console.log(`  ✓ Workspace seeded: ${session.workspaceDir}`);
 
+    // For the engineering stage, also seed the workspace with real source files
+    if (stage === "software-engineering") {
+      await seedEngineeringWorkspace(session.workspaceDir, workOrderContext, ghClient);
+    }
+
     // Execute stage via Claude
     const result = await executor.executeStage({
       stage,
@@ -187,6 +386,8 @@ async function processOneRun(
       contextSnapshot: { workOrder: workOrderContext },
       workspaceDir: session.workspaceDir,
       allowedTools: ["read_file", "write_file", "run_command", "list_directory", "report_stage_output"],
+      containerId: session.containerId,
+      portMcpBinary: process.env["PORT_MCP_BINARY"],
     });
 
     // Copy produced files from workspace into evidence dir before building artifact
@@ -232,11 +433,34 @@ async function processOneRun(
       return;
     }
 
+    // For software-engineering: create a real branch + PR on the target repo,
+    // then wait for the independent verifier check
+    if (stage === "software-engineering" && result.success) {
+      const manifest = await createPrFromWorkspace(
+        evidenceDir,  // use the persisted evidence copy (sandbox may be destroyed)
+        runId,
+        workOrderContext,
+        run.factoryRelease,
+        ghClient
+      );
+
+      if (manifest) {
+        const { writeFileSync: wf2 } = await import("fs");
+        wf2(
+          path.join(evidenceDir, "execution-manifest.json"),
+          JSON.stringify(manifest, null, 2),
+          "utf-8"
+        );
+        result.producedFiles.push("execution-manifest.json");
+        console.log(`  ✓ execution-manifest.json written (PR #${manifest.prNumber})`);
+      }
+    }
+
     // For software-engineering: wait for independent check from trusted verifier
     if (stage === "software-engineering" && process.env["GITHUB_TOKEN"]) {
       console.log(`  ⏳ Waiting for factory-contract/acceptance check...`);
       const manifestContent = result.producedFiles.includes("execution-manifest.json")
-        ? JSON.parse(readFileSync(path.join(session.workspaceDir, "execution-manifest.json"), "utf-8")) as { headSha?: string; prOwner?: string; prRepo?: string }
+        ? JSON.parse(readFileSync(path.join(evidenceDir, "execution-manifest.json"), "utf-8")) as { headSha?: string; prOwner?: string; prRepo?: string }
         : {};
 
       if (manifestContent.headSha && manifestContent.prOwner && manifestContent.prRepo) {
