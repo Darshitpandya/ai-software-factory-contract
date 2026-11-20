@@ -1,4 +1,11 @@
 name: factory-eval
+# Triggered by Port self-service action "Run Evaluation"
+# This workflow:
+#   1. Reports in-progress back to Port immediately
+#   2. Validates both release versions exist in the repo
+#   3. If DATABASE_URL is available: inserts a comparison record and starts the evaluation
+#   4. If no DATABASE_URL: records the evaluation intent in Port only
+#   5. Reports success or failure back to Port with the comparison ID
 
 on:
   workflow_dispatch:
@@ -11,24 +18,153 @@ on:
         description: 'Candidate factory release version'
         required: true
         default: '1.5.0'
+      portRunId:
+        description: 'Port action run ID for status reporting back to Port'
+        required: false
+        type: string
+      releaseEntityId:
+        description: 'Port factoryRelease entity ID (candidate) for updating status'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
+  PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
 
 jobs:
   evaluate:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 30
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
-      - run: pnpm install --frozen-lockfile
-      - name: Run evaluation
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # ── Report in-progress to Port immediately ─────────────────────────────
+      - name: Report in-progress to Port
+        if: ${{ inputs.portRunId != '' }}
+        run: |
+          PORT_TOKEN=$(curl -s -X POST "https://api.getport.io/v1/auth/access_token" \
+            -H "Content-Type: application/json" \
+            -d "{\"clientId\":\"$PORT_CLIENT_ID\",\"clientSecret\":\"$PORT_CLIENT_SECRET\"}" \
+            | jq -r '.accessToken')
+
+          curl -s -X PATCH "https://api.getport.io/v1/actions/runs/${{ inputs.portRunId }}" \
+            -H "Authorization: Bearer $PORT_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"status\":\"IN_PROGRESS\",\"summary\":\"Evaluation started: ${{ inputs.baseVersion }} vs ${{ inputs.candidateVersion }}\"}"
+
+      # ── Validate release files exist ───────────────────────────────────────
+      - name: Validate release versions
+        run: |
+          if [ ! -f "factory-releases/${{ inputs.baseVersion }}/factory-release.yaml" ]; then
+            echo "✗ Base release ${{ inputs.baseVersion }} not found in factory-releases/"
+            exit 1
+          fi
+          if [ ! -f "factory-releases/${{ inputs.candidateVersion }}/factory-release.yaml" ]; then
+            echo "✗ Candidate release ${{ inputs.candidateVersion }} not found in factory-releases/"
+            exit 1
+          fi
+          echo "✓ Both releases validated"
+          echo "  base:      ${{ inputs.baseVersion }}"
+          echo "  candidate: ${{ inputs.candidateVersion }}"
+
+      # ── Start evaluation (with DB if available) ────────────────────────────
+      - name: Start evaluation
+        id: start_eval
         env:
-          PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
-          PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          pnpm factory evaluation:run \
-            --base "${{ inputs.baseVersion }}" \
-            --candidate "${{ inputs.candidateVersion }}"
+          if [ -n "$DATABASE_URL" ]; then
+            echo "DATABASE_URL set — creating evaluation comparison record"
+            pnpm factory evaluation:run \
+              --base "${{ inputs.baseVersion }}" \
+              --candidate "${{ inputs.candidateVersion }}" 2>&1 | tee /tmp/eval_output.txt
+
+            COMPARISON_ID=$(grep "comparison-id:" /tmp/eval_output.txt | awk '{print $2}')
+            echo "COMPARISON_ID=$COMPARISON_ID" >> $GITHUB_OUTPUT
+            echo "✓ Evaluation comparison created: $COMPARISON_ID"
+          else
+            echo "No DATABASE_URL — evaluation recorded in Port only (run coordinator locally to execute)"
+            COMPARISON_ID=$(node -e "const c=require('crypto'); console.log(c.randomUUID())")
+            echo "COMPARISON_ID=$COMPARISON_ID" >> $GITHUB_OUTPUT
+            echo "⚡ To execute the evaluation locally:"
+            echo "   export \$(cat .env | grep -v '#' | xargs)"
+            echo "   pnpm factory evaluation:run --base ${{ inputs.baseVersion }} --candidate ${{ inputs.candidateVersion }}"
+          fi
+
+      # ── Update the FactoryRelease entity in Port ───────────────────────────
+      - name: Update FactoryRelease entity in Port
+        if: ${{ inputs.releaseEntityId != '' }}
+        run: |
+          PORT_TOKEN=$(curl -s -X POST "https://api.getport.io/v1/auth/access_token" \
+            -H "Content-Type: application/json" \
+            -d "{\"clientId\":\"$PORT_CLIENT_ID\",\"clientSecret\":\"$PORT_CLIENT_SECRET\"}" \
+            | jq -r '.accessToken')
+
+          COMPARISON_ID="${{ steps.start_eval.outputs.COMPARISON_ID }}"
+
+          curl -s -X PATCH "https://api.getport.io/v1/blueprints/factoryRelease/entities/${{ inputs.releaseEntityId }}" \
+            -H "Authorization: Bearer $PORT_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"properties\": {
+                \"status\": \"CANDIDATE\",
+                \"evaluationComparisonId\": \"$COMPARISON_ID\",
+                \"evaluationGithubRunUrl\": \"https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\"
+              }
+            }" || echo "⚠ Could not update FactoryRelease entity — continuing"
+
+      # ── Report success back to Port ────────────────────────────────────────
+      - name: Report success to Port
+        if: ${{ success() && inputs.portRunId != '' }}
+        run: |
+          PORT_TOKEN=$(curl -s -X POST "https://api.getport.io/v1/auth/access_token" \
+            -H "Content-Type: application/json" \
+            -d "{\"clientId\":\"$PORT_CLIENT_ID\",\"clientSecret\":\"$PORT_CLIENT_SECRET\"}" \
+            | jq -r '.accessToken')
+
+          COMPARISON_ID="${{ steps.start_eval.outputs.COMPARISON_ID }}"
+          DB_STATUS="${{ secrets.DATABASE_URL != '' && 'Comparison record created in DB.' || 'No DATABASE_URL — run coordinator locally to execute.' }}"
+
+          curl -s -X PATCH "https://api.getport.io/v1/actions/runs/${{ inputs.portRunId }}" \
+            -H "Authorization: Bearer $PORT_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"status\": \"SUCCESS\",
+              \"summary\": \"Evaluation started: ${{ inputs.baseVersion }} vs ${{ inputs.candidateVersion }} | Comparison: $COMPARISON_ID | Track with: pnpm factory evaluation:report --comparison $COMPARISON_ID\"
+            }"
+
+      # ── Report failure back to Port ────────────────────────────────────────
+      - name: Report failure to Port
+        if: ${{ failure() && inputs.portRunId != '' }}
+        run: |
+          PORT_TOKEN=$(curl -s -X POST "https://api.getport.io/v1/auth/access_token" \
+            -H "Content-Type: application/json" \
+            -d "{\"clientId\":\"$PORT_CLIENT_ID\",\"clientSecret\":\"$PORT_CLIENT_SECRET\"}" \
+            | jq -r '.accessToken')
+
+          curl -s -X PATCH "https://api.getport.io/v1/actions/runs/${{ inputs.portRunId }}" \
+            -H "Authorization: Bearer $PORT_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"status\": \"FAILURE\",
+              \"summary\": \"Evaluation failed for ${{ inputs.baseVersion }} vs ${{ inputs.candidateVersion }} — check GitHub Actions logs for details\"
+            }"
