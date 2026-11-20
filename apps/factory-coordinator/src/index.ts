@@ -239,6 +239,19 @@ async function main(): Promise<void> {
     console.warn("⚠ GitHub App credentials not configured — engineering stage will not create PRs");
   }
 
+  // OpenSandbox connectivity check
+  const sandboxPing = await sandbox.ping();
+  if (sandboxPing) {
+    const domain = process.env["OPENSANDBOX_DOMAIN"];
+    if (domain) {
+      console.log(`✓ OpenSandbox server connected (${domain})`);
+    } else {
+      console.log("✓ Sandbox ready (plain temp dir — set OPENSANDBOX_DOMAIN to enable OpenSandbox)");
+    }
+  } else {
+    console.warn("⚠ OpenSandbox server not reachable — stages will run without sandbox isolation");
+  }
+
   // Ping prerequisites
   const portPing = await port.ping();
   if (!portPing.ok) {
@@ -387,6 +400,24 @@ async function processOneRun(
       allowedTools: ["read_file", "write_file", "run_command", "list_directory", "report_stage_output"],
       containerId: session.containerId,
       portMcpBinary: process.env["PORT_MCP_BINARY"],
+      // Route commands through OpenSandbox SDK when a sandbox handle is available
+      sandboxCommandRunner: session.sandboxHandle
+        ? async (cmd: string, cwd?: string) => {
+            const workCwd = cwd ? `/workspace/${cwd}` : "/workspace";
+            const execution = await (session.sandboxHandle!).commands.run(
+              `cd ${workCwd} && ${cmd}`
+            );
+            const stdout = execution.logs.stdout.map((l: { text: string }) => l.text).join("");
+            const stderr = execution.logs.stderr.map((l: { text: string }) => l.text).join("");
+            if (execution.exitCode !== 0) {
+              const err = new Error(`Exit ${execution.exitCode}`) as Error & { stdout: string; stderr: string };
+              err.stdout = stdout;
+              err.stderr = stderr;
+              throw err;
+            }
+            return stdout;
+          }
+        : undefined,
     });
 
     // Copy produced files from workspace into evidence dir before building artifact
