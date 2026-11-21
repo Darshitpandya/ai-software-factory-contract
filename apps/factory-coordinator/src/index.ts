@@ -554,8 +554,14 @@ async function processOneRun(
       const runAfterAccept = await getRun(pool, runId);
       if (runAfterAccept) {
         const metrics = computeRunMetrics(runId);
+        // Build stage breakdown after every accepted stage so Port shows live progress
+        const breakdownMd = buildStageModelBreakdownMd(runId);
         const runTitle = `${workOrderContext.title as string} · ${run.factoryRelease}`;
-        await port.upsertFactoryRun(runAfterAccept, undefined, { ...metrics, runTitle });
+        await port.upsertFactoryRun(runAfterAccept, undefined, {
+          ...metrics,
+          stageModelBreakdown: breakdownMd ?? undefined,
+          runTitle,
+        });
         if (metrics.totalTokens > 0) {
           console.log(`  → tokens so far: ${metrics.totalTokens.toLocaleString()} | ~$${metrics.estimatedCostUsd.toFixed(4)}`);
         }
