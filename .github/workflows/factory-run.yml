@@ -1,54 +1,50 @@
 name: factory-run
-# Triggered by Port self-service action "Trigger Factory Run"
-# This workflow:
-#   1. Creates the factory run record in Port (always works)
-#   2. If DATABASE_URL is available: also creates the DB record for the local/cloud coordinator
-#   3. Reports back to Port with the run ID
+# Triggered by Port self-service actions on the workOrder and factoryRun blueprints.
 #
-# For the demo: run the coordinator locally first:
-#   cd ai-software-factory-contract
-#   export $(cat .env | grep -v '#' | xargs)
-#   node_modules/.bin/tsx apps/factory-coordinator/src/index.ts
-# The coordinator polls PostgreSQL every 10s and picks up PENDING runs automatically.
+# Actions handled:
+#   run          — creates a PENDING factoryRun entity; coordinator on Railway picks it up
+#   approve-stage — updates the factoryRun entity so the coordinator can advance
+#
+# The coordinator is deployed on Railway and polls Port every 10 seconds.
+# This workflow never connects to PostgreSQL directly.
 
 on:
   workflow_dispatch:
     inputs:
       workOrderId:
-        description: 'Port WorkOrder entity ID'
+        description: 'Port WorkOrder entity identifier'
         required: true
         type: string
       releaseVersion:
-        description: 'Factory release version'
+        description: 'Factory release version (must match a factoryRelease entity)'
         required: false
         default: '1.4.0'
         type: string
       portRunId:
-        description: 'Port action run ID for status reporting back to Port'
+        description: 'Port action run ID — used to report SUCCESS back to Port'
         required: false
         type: string
       action:
-        description: 'Action: run | approve-stage | rollback'
+        description: 'run | approve-stage'
         required: false
         default: 'run'
         type: choice
-        options: [run, approve-stage, rollback]
+        options: [run, approve-stage]
       runId:
-        description: 'Existing run ID (for approve-stage / rollback)'
+        description: 'Existing factory run ID (approve-stage only)'
         required: false
         type: string
       stage:
-        description: 'Stage to approve (for approve-stage action)'
+        description: 'Stage name to approve (approve-stage only)'
         required: false
         type: string
       decision:
-        description: 'APPROVE or REJECT (for approve-stage)'
+        description: 'APPROVE or REJECT (approve-stage only)'
         required: false
         type: string
 
 permissions:
   contents: read
-  id-token: write
 
 env:
   PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
@@ -57,55 +53,39 @@ env:
 jobs:
   factory-run:
     runs-on: ubuntu-latest
-    timeout-minutes: 10   # Short — we just create the record, coordinator runs locally
+    timeout-minutes: 5
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          run_install: false
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      # ── Create factory run record ──────────────────────────────────────────
-      - name: Create factory run (Port entity — coordinator picks it up)
-        if: ${{ inputs.action == 'run' }}
-        id: create_run
+      # ── Get a Port access token (used by all steps) ──────────────────────────
+      - name: Authenticate with Port
+        id: port_auth
         run: |
-          # Write GitHub App key if available
-          if [ -n "${{ secrets.FACTORY_APP_PRIVATE_KEY }}" ]; then
-            echo "${{ secrets.FACTORY_APP_PRIVATE_KEY }}" > /tmp/factory_key.pem
-            chmod 600 /tmp/factory_key.pem
-          fi
-
-          # Generate a run ID
-          RUN_ID=$(node -e "const c=require('crypto'); console.log(c.randomUUID())")
-          echo "RUN_ID=$RUN_ID" >> $GITHUB_OUTPUT
-
-          # Create the factoryRun entity in Port
-          # The coordinator on Railway polls Port every 10s via syncPendingFromPort
-          # and creates the matching DB record automatically
-          PORT_TOKEN=$(curl -s -X POST "https://api.getport.io/v1/auth/access_token" \
+          TOKEN=$(curl -sf -X POST "https://api.getport.io/v1/auth/access_token" \
             -H "Content-Type: application/json" \
             -d "{\"clientId\":\"$PORT_CLIENT_ID\",\"clientSecret\":\"$PORT_CLIENT_SECRET\"}" \
             | jq -r '.accessToken')
+          echo "token=$TOKEN" >> $GITHUB_OUTPUT
 
-          TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          curl -s -X POST "https://api.getport.io/v1/blueprints/factoryRun/entities?upsert=true&merge=true" \
+      # ── action: run ───────────────────────────────────────────────────────────
+      # Creates a PENDING factoryRun entity in Port.
+      # The coordinator on Railway detects it via syncPendingFromPort within 10 seconds
+      # and processes all 5 factory stages autonomously.
+      - name: Create factory run
+        if: ${{ inputs.action == 'run' }}
+        id: create_run
+        env:
+          PORT_TOKEN: ${{ steps.port_auth.outputs.token }}
+        run: |
+          RUN_ID=$(node -e "console.log(require('crypto').randomUUID())")
+          echo "RUN_ID=$RUN_ID" >> $GITHUB_OUTPUT
+
+          RESULT=$(curl -sf -X POST \
+            "https://api.getport.io/v1/blueprints/factoryRun/entities?upsert=true&merge=true" \
             -H "Authorization: Bearer $PORT_TOKEN" \
             -H "Content-Type: application/json" \
             -d "{
               \"identifier\": \"$RUN_ID\",
-              \"title\": \"Run $(echo $RUN_ID | cut -c1-8) — ${{ inputs.workOrderId }}\",
+              \"title\": \"Run ${RUN_ID:0:8} — ${{ inputs.workOrderId }}\",
               \"properties\": {
                 \"runId\": \"$RUN_ID\",
                 \"status\": \"PENDING\",
@@ -117,58 +97,46 @@ jobs:
                 \"workOrder\": \"${{ inputs.workOrderId }}\",
                 \"factoryRelease\": \"factory-release-${{ inputs.releaseVersion }}\"
               }
-            }"
-          echo "✓ Port factoryRun entity created: $RUN_ID"
-          echo "✓ Coordinator on Railway will pick it up within 10s via syncPendingFromPort"
+            }" | jq -r '.identifier')
 
-      # ── Approve stage ──────────────────────────────────────────────────────
-      - name: Approve stage
+          echo "✓ factoryRun created: $RESULT"
+          echo "✓ Coordinator on Railway will pick it up within 10s"
+
+      # ── action: approve-stage ─────────────────────────────────────────────────
+      # Updates the factoryRun entity in Port.
+      # The coordinator polls Port every 10s and reads this decision from Port properties.
+      - name: Record stage approval
         if: ${{ inputs.action == 'approve-stage' }}
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PORT_TOKEN: ${{ steps.port_auth.outputs.token }}
         run: |
-          if [ -n "$DATABASE_URL" ]; then
-            node -e "
-              const { Client } = require('pg');
-              const c = new Client({ connectionString: process.env.DATABASE_URL });
-              c.connect()
-                .then(() => c.query(
-                  'INSERT INTO stage_approvals (run_id, stage, decision, approved_by, port_action_run_id) VALUES (\$1,\$2,\$3,\$4,\$5)',
-                  ['${{ inputs.runId }}', '${{ inputs.stage }}', '${{ inputs.decision }}', 'port-action', '${{ inputs.portRunId }}']
-                ))
-                .then(() => { console.log('Stage approval recorded in DB'); c.end(); })
-                .catch(e => { console.error(e); process.exit(1); });
-            " || echo "DB not available — approval recorded in Port only"
-          fi
-
-          # Also update Port entity
-          PORT_TOKEN=$(curl -s -X POST "https://api.getport.io/v1/auth/access_token" \
+          curl -sf -X PATCH \
+            "https://api.getport.io/v1/blueprints/factoryRun/entities/${{ inputs.runId }}" \
+            -H "Authorization: Bearer $PORT_TOKEN" \
             -H "Content-Type: application/json" \
-            -d "{\"clientId\":\"$PORT_CLIENT_ID\",\"clientSecret\":\"$PORT_CLIENT_SECRET\"}" \
-            | jq -r '.accessToken')
-          echo "Stage ${{ inputs.stage }} ${{ inputs.decision }} recorded for run ${{ inputs.runId }}"
+            -d "{
+              \"properties\": {
+                \"humanDecision\": \"${{ inputs.decision }}\",
+                \"humanDecisionStage\": \"${{ inputs.stage }}\",
+                \"humanDecisionBy\": \"port-action\"
+              }
+            }"
+          echo "✓ Stage ${{ inputs.stage }} decision ${{ inputs.decision }} recorded on run ${{ inputs.runId }}"
 
-      # ── Report success back to Port ────────────────────────────────────────
-      - name: Report success to Port
+      # ── Report result back to Port ────────────────────────────────────────────
+      - name: Report to Port
         if: ${{ always() && inputs.portRunId != '' }}
+        env:
+          PORT_TOKEN: ${{ steps.port_auth.outputs.token }}
+          RUN_ID: ${{ steps.create_run.outputs.RUN_ID }}
         run: |
-          PORT_TOKEN=$(curl -s -X POST "https://api.getport.io/v1/auth/access_token" \
-            -H "Content-Type: application/json" \
-            -d "{\"clientId\":\"$PORT_CLIENT_ID\",\"clientSecret\":\"$PORT_CLIENT_SECRET\"}" \
-            | jq -r '.accessToken')
-
-          RUN_ID="${{ steps.create_run.outputs.RUN_ID }}"
           if [ -n "$RUN_ID" ]; then
-            SUMMARY="Factory run created: $RUN_ID | Coordinator picks it up automatically | View: https://app.getport.io/factoryRun/$RUN_ID"
+            SUMMARY="Run $RUN_ID queued. Coordinator processing on Railway — view at https://app.getport.io/factoryRun/$RUN_ID"
           else
-            SUMMARY="Action completed"
+            SUMMARY="Action completed for run ${{ inputs.runId }}"
           fi
 
-          curl -s -X PATCH "https://api.getport.io/v1/actions/runs/${{ inputs.portRunId }}" \
+          curl -sf -X PATCH "https://api.getport.io/v1/actions/runs/${{ inputs.portRunId }}" \
             -H "Authorization: Bearer $PORT_TOKEN" \
             -H "Content-Type: application/json" \
             -d "{\"status\":\"SUCCESS\",\"summary\":\"$SUMMARY\"}"
-
-      - name: Cleanup
-        if: always()
-        run: rm -f /tmp/factory_key.pem
