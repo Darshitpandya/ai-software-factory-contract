@@ -76,20 +76,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # ── Report to Port: run is being dispatched ────────────────────────────
-      - name: Report in-progress to Port
-        if: ${{ inputs.portRunId != '' }}
-        run: |
-          PORT_TOKEN=$(curl -s -X POST "https://api.getport.io/v1/auth/access_token" \
-            -H "Content-Type: application/json" \
-            -d "{\"clientId\":\"$PORT_CLIENT_ID\",\"clientSecret\":\"$PORT_CLIENT_SECRET\"}" \
-            | jq -r '.accessToken')
-
-          curl -s -X PATCH "https://api.getport.io/v1/actions/runs/${{ inputs.portRunId }}" \
-            -H "Authorization: Bearer $PORT_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d '{"status":"IN_PROGRESS","summary":"Factory run dispatched — coordinator will pick up"}'
-
       # ── Create factory run record ──────────────────────────────────────────
       - name: Create factory run (Port entity — coordinator picks it up)
         if: ${{ inputs.action == 'run' }}
