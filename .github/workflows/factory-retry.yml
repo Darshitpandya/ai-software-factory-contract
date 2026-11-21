@@ -1,4 +1,7 @@
 name: factory-retry
+# Triggered by Port self-service action "Resume Factory Run"
+# Marks the run as PENDING in Port so the coordinator on Railway picks it up again.
+# The coordinator is deployed on Railway — this workflow never runs the coordinator itself.
 
 on:
   workflow_dispatch:
@@ -7,59 +10,50 @@ on:
         description: 'Factory Run ID to resume'
         required: true
         type: string
-      fromStage:
-        description: 'Resume from stage (optional)'
-        required: false
-        type: choice
-        options:
-          - ''
-          - product-requirements
-          - software-architecture
-          - software-engineering
-          - security-compliance
-          - platform-operations
       portRunId:
-        description: 'Port action run ID'
+        description: 'Port action run ID for status reporting'
         required: false
         type: string
 
 permissions:
   contents: read
-  actions: write
-  id-token: write
+
+env:
+  PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
+  PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
 
 jobs:
   resume-run:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 5
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-      - name: Install
-        run: pnpm install --frozen-lockfile
-      - name: Resume factory run
-        env:
-          PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
-          PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - name: Authenticate with Port
+        id: port_auth
         run: |
-          pnpm factory resume --run-id "${{ inputs.runId }}"
-      - name: Start coordinator
+          TOKEN=$(curl -sf -X POST "https://api.getport.io/v1/auth/access_token" \
+            -H "Content-Type: application/json" \
+            -d "{\"clientId\":\"$PORT_CLIENT_ID\",\"clientSecret\":\"$PORT_CLIENT_SECRET\"}" \
+            | jq -r '.accessToken')
+          echo "token=$TOKEN" >> $GITHUB_OUTPUT
+
+      - name: Set run back to PENDING
         env:
-          PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
-          PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          GITHUB_APP_ID: ${{ secrets.FACTORY_APP_ID }}
-          GITHUB_APP_PRIVATE_KEY_PATH: /tmp/github_app_key.pem
-          GITHUB_APP_INSTALLATION_ID: ${{ secrets.FACTORY_APP_INSTALLATION_ID }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PORT_TOKEN: ${{ steps.port_auth.outputs.token }}
         run: |
-          echo "${{ secrets.FACTORY_APP_PRIVATE_KEY }}" > /tmp/github_app_key.pem
-          chmod 600 /tmp/github_app_key.pem
-          timeout 80m pnpm --filter factory-coordinator start || true
-      - name: Cleanup
-        if: always()
-        run: rm -f /tmp/github_app_key.pem
+          curl -sf -X PATCH \
+            "https://api.getport.io/v1/blueprints/factoryRun/entities/${{ inputs.runId }}" \
+            -H "Authorization: Bearer $PORT_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"properties": {"status": "PENDING"}}'
+          echo "✓ Run ${{ inputs.runId }} set to PENDING — coordinator on Railway will pick it up within 10s"
+
+      - name: Report to Port
+        if: ${{ always() && inputs.portRunId != '' }}
+        env:
+          PORT_TOKEN: ${{ steps.port_auth.outputs.token }}
+        run: |
+          curl -sf -X PATCH "https://api.getport.io/v1/actions/runs/${{ inputs.portRunId }}" \
+            -H "Authorization: Bearer $PORT_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"status\":\"SUCCESS\",\"summary\":\"Run ${{ inputs.runId }} queued for resume — coordinator will pick it up within 10s\"}"
